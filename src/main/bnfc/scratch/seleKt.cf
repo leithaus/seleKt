@@ -1,0 +1,362 @@
+-- -*- mode: Haskell;-*- 
+-- Filename:    dataset.cf 
+-- Authors:     lgm                                                    
+-- Creation:    Thu Jan  8 13:48:32 2009 
+-- Copyright:   Not supplied 
+-- Description: 
+--
+-- Some examples
+--
+-- // a small extensional collection of values
+-- record { 1, 2, 3 } 
+--
+-- // another small extensional collection of values
+-- record { lambda x. x, lambda x, y. x, lambda x, y, z. (x z (y z)) } 
+--
+-- // combining the first and second collections
+-- let R1 = record { lambda x. x, lambda x, y. x, lambda x, y, z. (x z (y z)) },
+--     R2 = record { 1, 2, 3 } in
+--     R1 | R2
+--
+-- // building a lazy collection
+-- let R3 = 1 :: R3 in R3
+--
+-- // a collection of terms built from extracting sources from R1, R2, R3
+-- // and placing them in a ctor
+-- let R1 = record { lambda x. x, lambda x, y. x, lambda x, y, z. (x z (y z)) },
+--     R2 = record { 1, 2, 3 } 
+--     R3 = 1 :: R3 in
+-- record { lambda X, Y, Z. ($H1 $A1 $A2) | $H1 <- R1, $A1 <- R2, $A2 <- R3 }
+--
+-- // a collection of terms built from extracting sources from a persistent
+-- // store and filtering for specific structure
+-- record { $H1 | $H1 <- store jdbc:mysql://localhost/vorpal_production, 
+--                $H1 in lambda X, Y, Z. (true true (true true)) }
+--
+-- ------------------------------------------------------------------------
+
+-- ********************************************************************************* --
+--                       RecordExprs collect domain values                           --
+-- ********************************************************************************* --
+
+Joined           . RecordExpr        ::= RecordExpr "&" RecordExpr1                   ;
+Isolated         . RecordExpr        ::= RecordExpr1 "|" RecordExpr2                  ;
+Consed           . RecordExpr2       ::= DomainExpr "::" RecordExpr3                  ;
+Contexted        . RecordExpr3       ::= "let" [Binding] "in" RecordExpr3             ;
+Referenced       . RecordExpr3       ::= RecordVariable                               ;
+Collected        . RecordExpr3       ::= "record" CollectionExpr                      ;
+Emptied          . RecordExpr3       ::= "Nil"                                        ;
+
+_                . RecordExpr        ::= RecordExpr1                                  ;
+_                . RecordExpr1       ::= RecordExpr2                                  ;
+_                . RecordExpr2       ::= RecordExpr3                                  ;
+_                . RecordExpr3       ::= "(" RecordExpr ")"                           ;
+
+BindingExpr      . Binding           ::= RecordPtn "=" RecordPtn                      ;
+
+RecordDestructor . RecordPtn         ::= "{:" [DomainPtn] ":" RecordPtn ":}"          ;
+RecordLiteral    . RecordPtn         ::= RecordExpr                                   ;
+
+RecordIdent      . RecordVariable    ::= UIdent                                       ;
+RecordWild       . RecordVariable    ::= "_"                                          ;
+
+-- ********************************************************************************* --
+--    We formally acknowledge that there are two kinds of collections:               --
+--    1) Those we can write down explicitly -- extensionally -- and                  --
+--    2) Those we must write down programmatically -- intensionally                  --
+--                                                                                   --
+--    In computation there are several situations where we must write down           --
+--    collections programmatically, here are two:                                    --
+--    1) We don't know the elements in advance: we learn them as we go               --
+--    2) There are too many of them (up to countably infinitely many) to write down  --
+--       but we have a rule that allows us to pick them out or produce them from     --
+--       another collection                                                          --
+-- ********************************************************************************* --
+
+Extension        . CollectionExpr    ::= ExtensionBodyExpr                            ;
+Intension        . CollectionExpr    ::= IntensionBodyExpr                            ;
+
+ExtensionBody    . ExtensionBodyExpr ::= "{" [DomainExpr] "}"                         ;
+IntensionBody    . IntensionBodyExpr ::= "{" DomainPtn "|" [DomainDeclOrCond] "}"     ;
+
+-- ********************************************************************************* --
+--                     Intensional collection elements
+-- ********************************************************************************* --
+
+ConditionIn      . DomainDeclOrCond  ::= DomainCond                                   ;
+DeclIn           . DomainDeclOrCond  ::= DomainGen                                    ;
+
+DomainGenExpr    . DomainGen         ::= DomainPtn "<-" RecordSource                  ;
+DomainSatExpr    . DomainCond        ::= DomainPtn "in" DomainCondition               ;
+DomainCompExpr   . DomainCond        ::= ValueExpr Comparison ValueExpr               ;
+
+DomainPtnExpr    . DomainPtn         ::= "?" RLambdaPCtxt                             ;
+DomainRLambdaExpr . DomainExpr       ::= RLambdaExpr                                  ;
+
+OnBoardSource    . RecordSource      ::= RecordExpr                                   ;
+PersistentSource . RecordSource      ::= "store" StoreURL                             ;
+WireSource       . RecordSource      ::= "wire" WireURL                               ;
+
+-- ********************************************************************************* --
+-- These DomainConditions come from the structure of the results collection      
+-- ********************************************************************************* --
+
+DisjunctDomainCondition . DomainCondition  ::= DomainCondition "||" DomainCondition1  ;
+ConjunctDomainCondition . DomainCondition1 ::= DomainCondition1 "&" DomainCondition2  ;
+NegatedDomainCondition  . DomainCondition2 ::= "~" DomainCondition2                   ;
+
+_                . DomainCondition   ::= DomainCondition1                             ;
+_                . DomainCondition1  ::= DomainCondition2                             ;
+_                . DomainCondition2  ::= "(" DomainCondition ")"                      ;
+
+-- ********************************************************************************* --
+-- These DomainConditions come from the structure of the domain term language
+-- ********************************************************************************* --
+
+StructuralDomainCondition . DomainCondition2 ::= "?" RLambdaLCtxt                     ;
+
+-- ********************************************************************************* --
+-- These DomainConditions come from the behavior of the domain term language
+-- ********************************************************************************* --
+
+BehavioralDomainCondition . DomainCondition2 ::= Modality DomainCondition2            ;
+ProbePossibility . Modality          ::= "<" DomainCondition2 ">"                     ;
+
+-- ********************************************************************************* --
+-- The de-structors of the domain term language can be used both for logical         --
+-- conditions as well as patterns.                                                   --
+--                                                                                   --
+-- From a DRY perspective the LBNF formalism does not offer quite enough             --
+-- parametricity. We have to repeat the context specification to allow the context   --
+-- hole to be a pattern variable in the case of the pattern language, and the ground --
+-- logical values in the case of the logical conditions.                             --
+--                                                                                   --
+-- There are a number of other situations where a parametric form of BNF would be of --
+-- considerable utility.                                                             --
+-- ********************************************************************************* --
+
+ApplicationPCtxt . RLambdaPCtxt       ::= RLambdaPCtxt [RLambdaPCtxt1] ";"             ;
+AbstractionPCtxt . RLambdaPCtxt1      ::= "lambda" [FormalPCtxt] "." RLambdaPCtxt2     ;
+KPCtxt           . RLambdaPCtxt2      ::= ContinuePCtxt                                ;
+GroundPCtxt      . RLambdaPCtxt2      ::= ValuePCtxt                                   ;
+MentionPCtxt     . RLambdaPCtxt2      ::= FormalPCtxt                                  ;
+
+_                . RLambdaPCtxt       ::= RLambdaPCtxt1                                ;
+_                . RLambdaPCtxt1      ::= RLambdaPCtxt2                                ;
+_                . RLambdaPCtxt2      ::= "(" RLambdaPCtxt ")"                         ;
+
+PushPromptPCtxt  . ContinuePCtxt      ::= "pushPrompt" RLambdaPCtxt2 RLambdaPCtxt2     ;
+SubcontPCtxt     . ContinuePCtxt      ::= "withSubCont" RLambdaPCtxt2 RLambdaPCtxt2    ;
+PushSubContPCtxt . ContinuePCtxt      ::= "pushSubCont" RLambdaPCtxt2 RLambdaPCtxt2    ;
+
+TranscriptPCtxt  . FormalPCtxt        ::= "@" "<" RLambdaPCtxt2 ">"                    ;
+
+-- ********************************************************************************* --
+-- The basic expressions also provide de-structors                                   --
+-- ********************************************************************************* --
+
+ValueAddPCtxt    . ValuePCtxt         ::= ValuePCtxt "+" ValuePCtxt1                   ;
+ValueMultPCtxt   . ValuePCtxt1        ::= ValuePCtxt1 "*" ValuePCtxt2                  ;
+ValueNegPCtxt    . ValuePCtxt2        ::= "-" ValuePCtxt3                              ;
+ValueLitPCtxt    . ValuePCtxt3        ::= "!" ValueLiteral                             ;
+
+ValueEmptyPCtxt  . ValuePCtxt3        ::= ValuePCtxtHole                               ;
+
+_                . ValuePCtxt         ::= ValuePCtxt1                                  ;
+_                . ValuePCtxt1        ::= ValuePCtxt2                                  ;
+_                . ValuePCtxt2        ::= ValuePCtxt3                                  ;
+_                . ValuePCtxt3        ::= "[" ValuePCtxt "]"                           ;
+
+-- ********************************************************************************* --
+-- As mentioned above, the de-structors of the domain term language can be used both --
+-- for logical conditions as well as patterns; but, the LBNF formalism is not quite  --
+-- up to providing the ideally DRY conditions.                                       --
+-- ********************************************************************************* --
+
+ApplicationLCtxt . RLambdaLCtxt       ::= RLambdaLCtxt [RLambdaLCtxt1] ";"              ;
+AbstractionLCtxt . RLambdaLCtxt1      ::= "lambda" [FormalLCtxt] "." RLambdaLCtxt2      ;
+KLCtxt           . RLambdaLCtxt2      ::= ContinueLCtxt                                 ;
+MentionLCtxt     . RLambdaLCtxt2      ::= FormalLCtxt                                   ;
+GroundLCtxt      . RLambdaLCtxt2      ::= ValueLCtxt                                    ;
+
+_                . RLambdaLCtxt       ::= RLambdaLCtxt1                                 ;
+_                . RLambdaLCtxt1      ::= RLambdaLCtxt2                                 ;
+_                . RLambdaLCtxt2      ::= "(" RLambdaLCtxt ")"                          ;
+
+PushPromptLCtxt  . ContinueLCtxt      ::= "pushPrompt" RLambdaLCtxt2 RLambdaLCtxt2      ;
+SubconLCtxt      . ContinueLCtxt      ::= "withSubCont" RLambdaLCtxt2 RLambdaLCtxt2     ;
+PushSubContLCtxt . ContinueLCtxt      ::= "pushSubCont" RLambdaLCtxt2 RLambdaLCtxt2     ;
+
+TranscriptLCtxt  . FormalLCtxt        ::= "@" "<" RLambdaLCtxt2 ">"                     ;
+
+-- ********************************************************************************* --
+-- The basic expressions also provide de-structors                                   --
+-- ********************************************************************************* --
+
+ValueAddLCtxt    . ValueLCtxt         ::= ValueLCtxt "+" ValueLCtxt1                    ;
+ValueMultLCtxt   . ValueLCtxt1        ::= ValueLCtxt1 "*" ValueLCtxt2                   ;
+ValueNegLCtxt    . ValueLCtxt2        ::= "-" ValueLCtxt3                               ;
+ValueLitLCtxt    . ValueLCtxt3        ::= "!" ValueLiteral                              ;
+
+ValueEmptyLCtxt  . ValueLCtxt3        ::= ValueLCtxtHole                                ;
+
+_                . ValueLCtxt         ::= ValueLCtxt1                                   ;
+_                . ValueLCtxt1        ::= ValueLCtxt2                                   ;
+_                . ValueLCtxt2        ::= ValueLCtxt3                                   ;
+_                . ValueLCtxt3        ::= "[" ValueLCtxt "]"                            ;
+
+-- ********************************************************************************* --
+--                             Flavors of Context Holes
+-- ********************************************************************************* --
+
+--ValPPlaceHolder  . ValuePCtxtHole    ::= "$" UIdent                                   ;
+ValPPlaceHolder  . ValuePCtxtHole    ::= UIdent                                       ;
+ValWildCard      . ValuePCtxtHole    ::= Wild                                         ;
+
+ValLPlaceHolder  . ValueLCtxtHole    ::= LogicalGround                                ;
+
+-- ********************************************************************************* --
+-- These DomainConditions come from the structure of the results collection      
+-- ********************************************************************************* --
+
+Verity           . LogicalGround     ::= "true"                                       ;
+Absurdity        . LogicalGround     ::= "false"                                      ;
+Nullity          . LogicalGround     ::= "null"                                       ;
+
+Equality         . Comparison        ::= "=="                                         ;
+Less             . Comparison        ::= "<"                                          ;
+More             . Comparison        ::= ">"                                          ;
+LEq              . Comparison        ::= "<="                                         ;
+GEq              . Comparison        ::= ">="                                         ;
+
+-- ********************************************************************************* --
+--                     The Domain of RLambda Expressions                             --
+-- ********************************************************************************* --
+
+Application      . RLambdaExpr       ::= RLambdaExpr [RLambdaExpr1] ";"               ;
+Abstraction      . RLambdaExpr1      ::= "lambda" [FormalExpr] "." RLambdaExpr2       ;
+Continuation     . RLambdaExpr1      ::= ContinueExpr                                 ;
+Mention          . RLambdaExpr2      ::= FormalExpr                                   ;
+Value            . RLambdaExpr2      ::= ValueExpr                                    ;
+
+_                . RLambdaExpr       ::= RLambdaExpr1                                 ;
+_                . RLambdaExpr1      ::= RLambdaExpr2                                 ;
+--_                . ValueLiteral      ::= "(" RLambdaExpr ")"                          ;
+
+Prompt           . ContinueExpr      ::= "newPrompt"                                  ;
+PushPrompt       . ContinueExpr      ::= "pushPrompt" RLambdaExpr2 RLambdaExpr2       ;
+Subcontinuation  . ContinueExpr      ::= "withSubCont" RLambdaExpr2 RLambdaExpr2      ;
+PushSubCont      . ContinueExpr      ::= "pushSubCont" RLambdaExpr2 RLambdaExpr2      ;
+
+Transcription    . FormalExpr        ::= "@" "<" RLambdaExpr2 ">"                     ;
+AtomLiteral      . FormalExpr        ::= Ident                                        ;
+
+-- ********************************************************************************* --
+--                       Extended with basic expressions                             --
+-- ********************************************************************************* --
+
+ValueAddExpr     . ValueExpr         ::= ValueExpr "+" ValueExpr1                     ;
+ValueMultExpr    . ValueExpr1        ::= ValueExpr1 "*" ValueExpr2                    ;
+ValueNegExpr     . ValueExpr2        ::= "-" ValueExpr3                               ;
+ValueLitExpr     . ValueExpr3        ::= ValueLiteral                                 ;
+
+_                . ValueExpr         ::= ValueExpr1                                   ;
+_                . ValueExpr1        ::= ValueExpr2                                   ;
+_                . ValueExpr2        ::= ValueExpr3                                   ;
+_                . ValueExpr3        ::= "[" ValueExpr "]"                            ;
+
+ValueRecLit      . ValueLiteral      ::= "!" RecordExpr3                              ;
+ValueLamLit      . ValueLiteral      ::= "(" RLambdaExpr ")"                          ;
+ValueIntLit      . ValueLiteral      ::= Integer                                      ;
+ValueDoubleLit   . ValueLiteral      ::= Double                                       ;
+ValueStringLit   . ValueLiteral      ::= String                                       ;
+ValueCharLit     . ValueLiteral      ::= Char                                         ;
+
+ValueURLLit      . ValueLiteral      ::= URL                                          ;
+
+RecordStoreURL   . StoreURL          ::= URL                                          ;
+RecordWireURL    . WireURL           ::= URL                                          ;
+
+-- ********************************************************************************* --
+--                        Simple URL Syntax
+-- ********************************************************************************* --
+
+BasicURL         . URL               ::= "<" URLScheme ":" URLPath ">"                ;
+LocatedtedPath   . URLPath           ::= "/" URLLocation URLRelativePath              ;
+--RelativePath     . URLPath           ::= "/" URLRelativePath                          ;
+
+URLNetLocation   . URLLocation       ::= URLRoot URLRsrcLocation                      ;
+URLRsrcPortLoc   . URLRsrcLocation   ::= NetLocation ":" Port                         ;
+URLRsrcLoc       . URLRsrcLocation   ::= NetLocation                                  ;
+
+SlashPath        . URLRelativePath   ::= URLRoot [URLPathElement]                     ;
+
+URLOrigin        . URLRoot           ::= "/"                                          ;
+DNSAddr          . NetLocation       ::= [DNSElement]                                 ;
+AtomScheme       . URLScheme         ::= Ident                                        ;
+AtomPathElement  . URLPathElement    ::= Ident                                        ;
+AtomDNSElement   . DNSElement        ::= Ident                                        ;
+AtomPort         . Port              ::= Integer                                      ;
+
+-- ********************************************************************************* --
+--                        Lists used in the syntax
+-- ********************************************************************************* --
+
+[]               . [Binding]         ::=                                              ;
+(: [])           . [Binding]         ::= Binding                                      ;
+(:)              . [Binding]         ::= Binding "," [Binding]                        ;
+
+[]               . [DomainDeclOrCond] ::=                                             ;
+(: [])           . [DomainDeclOrCond] ::= DomainDeclOrCond                            ;
+(:)              . [DomainDeclOrCond] ::= DomainDeclOrCond "," [DomainDeclOrCond]     ;
+
+[]               . [DomainExpr]      ::=                                              ;
+(: [])           . [DomainExpr]      ::= DomainExpr                                   ;
+(:)              . [DomainExpr]      ::= DomainExpr "," [DomainExpr]                  ;
+
+[]               . [DomainPtn]       ::=                                              ;
+(: [])           . [DomainPtn]       ::= DomainPtn                                    ;
+(:)              . [DomainPtn]       ::= DomainPtn "," [DomainPtn]                    ;
+
+[]               . [FormalExpr]      ::=                                              ;
+(: [])           . [FormalExpr]      ::= FormalExpr                                   ;
+(:)              . [FormalExpr]      ::= FormalExpr "," [FormalExpr]                  ;
+
+[]               . [RLambdaExpr1]    ::=                                              ;
+--(: [])           . [RLambdaExpr1]    ::= RLambdaExpr1                                 ;
+(:)              . [RLambdaExpr1]    ::= RLambdaExpr1 [RLambdaExpr1]                  ;
+
+[]               . [FormalPCtxt]     ::=                                              ;
+(: [])           . [FormalPCtxt]     ::= FormalPCtxt                                  ;
+(:)              . [FormalPCtxt]     ::= FormalPCtxt "," [FormalPCtxt]                ;
+
+[]               . [RLambdaPCtxt1]   ::=                                              ;
+--(: [])           . [RLambdaPCtxt1]   ::= RLambdaPCtxt1                                ;
+(:)              . [RLambdaPCtxt1]   ::= RLambdaPCtxt1 [RLambdaPCtxt1]                ;
+
+[]               . [FormalLCtxt]     ::=                                              ;
+(: [])           . [FormalLCtxt]     ::= FormalLCtxt                                  ;
+(:)              . [FormalLCtxt]     ::= FormalLCtxt "," [FormalLCtxt]                ;
+
+[]               . [RLambdaLCtxt1]   ::=                                              ;
+--(: [])           . [RLambdaLCtxt1]   ::= RLambdaLCtxt1                                ;
+(:)              . [RLambdaLCtxt1]   ::= RLambdaLCtxt1 [RLambdaLCtxt1]                ;
+
+[]               . [URLPathElement]  ::=                                              ;
+(: [])           . [URLPathElement]  ::= URLPathElement                               ;
+(:)              . [URLPathElement]  ::= URLPathElement "/" [URLPathElement]          ;
+
+[]               . [DNSElement]      ::=                                              ;
+(: [])           . [DNSElement]      ::= DNSElement                                   ;
+(:)              . [DNSElement]      ::= DNSElement "." [DNSElement]                  ;
+
+comment "//"      ;
+comment "/*" "*/" ;
+
+-- entrypoints RecordExpr, RLambdaExpr, ValueExpr ;
+-- entrypoints RLambdaExpr2 ;
+
+token UIdent (upper (letter | digit | '_')*) ;
+--token LIdent (lower (letter | digit | '_')*) ;
+--token Wild   '_' char* ;
+token Wild   '_' ;

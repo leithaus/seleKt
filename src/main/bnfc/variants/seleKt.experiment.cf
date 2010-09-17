@@ -1,0 +1,266 @@
+-- -*- mode: Haskell;-*- 
+-- Filename:    dataset.cf 
+-- Authors:     lgm                                                    
+-- Creation:    Thu Jan  8 13:48:32 2009 
+-- Copyright:   Not supplied 
+-- Description: 
+-- ------------------------------------------------------------------------
+
+-- ********************************************************************************* --
+--                       RecordExpr's aggregate domain values                        --
+--                                                                                   --
+--    One of the original purposes of the RecordExpr instantiation of the design     --
+--    pattern was to ring the changes on 'tuples' to see if we got a version of the  --
+--    relational calculus back -- and we did!                                        --
+--                                                                                   --
+--    In this variation of the RecordExpr we explore gluing Domains together. That   --
+--    is we add the domain of RLambdaExprs to the domain of TupleExprs. There are a  --
+--    number of ways we might want to add RLambdaExprs to this setup:                --
+--    1) They are just another kind of ValueExpr                                     --
+--    2) They are implicitly a kind of TupleExpr                                     --
+--       a) e e1 ... eN is implicitly (e,e1,...,eN)                                  --
+--       b) e is implicitly (e), otherwise                                           --
+-- ********************************************************************************* --
+
+Joined           . RecordExpr        ::= RecordExpr "&" RecordExpr1                   ;
+Isolated         . RecordExpr        ::= RecordExpr1 "|" RecordExpr2                  ;
+Consed           . RecordExpr2       ::= DomainExpr "::" RecordExpr3                  ;
+Contexted        . RecordExpr3       ::= "let" [Binding] "in" RecordExpr3             ;
+Referenced       . RecordExpr3       ::= RecordVariable                               ;
+Collected        . RecordExpr3       ::= "record" CollectionExpr                      ;
+Emptied          . RecordExpr3       ::= "Nil"                                        ;
+
+_                . RecordExpr        ::= RecordExpr1                                  ;
+_                . RecordExpr1       ::= RecordExpr2                                  ;
+_                . RecordExpr2       ::= RecordExpr3                                  ;
+_                . RecordExpr3       ::= "((" RecordExpr "))"                         ;
+
+BindingExpr      . Binding           ::= RecordPtn "=" RecordPtn                      ;
+
+RecordDestructor . RecordPtn         ::= "{:" [DomainPtn] ";" RecordPtn ":}"          ;
+RecordLiteral    . RecordPtn         ::= RecordExpr                                   ;
+
+RecordIdent      . RecordVariable    ::= UIdent                                       ;
+RecordWild       . RecordVariable    ::= "_"                                          ;
+
+-- ********************************************************************************* --
+--    We formally acknowledge that there are two kinds of collections:               --
+--    1) Those we can write down explicitly -- extensionally -- and                  --
+--    2) Those we must write down programmatically -- intensionally                  --
+--                                                                                   --
+--    In computation there are several situations where we must write down           --
+--    collections programmatically, here are two:                                    --
+--    1) We don't know the elements in advance: we learn them as we go               --
+--    2) There are too many of them (up to countably infinitely many) to write down  --
+--       but we have a rule that allows us to pick them out or produce them from     --
+--       another collection                                                          --
+-- ********************************************************************************* --
+
+Extension        . CollectionExpr    ::= FieldFormals ExtensionBodyExpr               ;
+Intension        . CollectionExpr    ::= FieldFormals IntensionBodyExpr               ;
+
+FieldFormalSpec  . FieldFormals      ::= "(" [FieldExpr] ")"                          ;
+ExtensionBody    . ExtensionBodyExpr ::= "{" [DomainExpr] "}"                         ;
+IntensionBody    . IntensionBodyExpr ::= "{" DomainPtn "|" [DomainDeclOrCond] "}"     ;
+
+FieldDecl        . FieldExpr         ::= FieldName ":" FieldType                      ;
+FieldActual      . FieldExpr         ::= FieldName                                    ;
+
+FieldIdent       . FieldName         ::= UIdent                                       ;
+--FieldRenamed     . FieldForm         ::= Renaming "(" FieldForm ")"                   ;
+
+-- ********************************************************************************* --
+--                     The Domain of RLambda Expressions                             --
+-- ********************************************************************************* --
+Application      . RLambdaExpr       ::= RLambdaExpr [RLambdaExpr1]                   ;
+Mention          . RLambdaExpr1      ::= FormalExpr                                   ;
+Value            . RLambdaExpr1      ::= ValueExpr                                    ;
+Continuation     . RLambdaExpr1      ::= ContinueExpr                                 ;
+Abstraction      . RLambdaExpr1      ::= "lambda" [FormalExpr] "." RLambdaExpr1       ;
+
+_                . RLambdaExpr       ::= RLambdaExpr1                                 ;
+_                . RLambdaExpr1      ::= "(" RLambdaExpr ")"                          ;
+
+Prompt           . ContinueExpr      ::= "newPrompt"                                  ;
+PushPrompt       . ContinueExpr      ::= "pushPrompt" RLambdaExpr1 RLambdaExpr1       ;
+Subcontinuation  . ContinueExpr      ::= "withSubCont" RLambdaExpr1 RLambdaExpr1      ;
+PushSubCont      . ContinueExpr      ::= "pushSubCont" RLambdaExpr1 RLambdaExpr1      ;
+
+Transcription    . FormalExpr        ::= "@" "<" RLambdaExpr1 ">"                     ;
+AtomLiteral      . FormalExpr        ::= Ident                                        ;
+
+-- ********************************************************************************* --
+--                     The Domain of Tuple Expressions
+-- ********************************************************************************* --
+
+TupleSumExpr     . TupleExpr         ::= TupleExpr "+" TupleExpr1                     ;
+TupleMultExpr    . TupleExpr1        ::= TupleExpr1 "*" TupleExpr2                    ;
+TupleBaseExpr    . TupleExpr         ::= "(" [ValueExpr] ")"                          ;
+
+_                . TupleExpr         ::= TupleExpr1                                   ;
+_                . TupleExpr1        ::= TupleExpr2                                   ;
+_                . TupleExpr2        ::= "((" TupleExpr "))"                          ;
+
+ConditionIn      . TupleDeclOrCond   ::= TupleCond                                    ;
+DeclIn           . TupleDeclOrCond   ::= TupleGen                                     ;
+
+TuplePtnExpr     . TuplePtn          ::= "(" [ValueExpr] ")"                          ;
+
+TupleGenExpr     . TupleGen          ::= TuplePtn "<-" RecordExpr                     ;
+TupleSatExpr     . TupleCond         ::= TuplePtn "in" TupleCondition                 ;
+TupleCompExpr    . TupleCond         ::= ValueExpr Comparison ValueExpr               ;
+
+DisjunctTupleCondition . TupleCondition  ::= TupleCondition "||" TupleCondition1      ;
+ConjunctTupleCondition . TupleCondition  ::= TupleCondition1 "&" TupleCondition2      ;
+
+-- ********************************************************************************* --
+-- These TupleConditions come from the structure of the term language
+-- ********************************************************************************* --
+NegatedTupleCondition     . TupleCondition2 ::= "~" TupleCondition2                   ;
+StructuralTupleCondition  . TupleCondition2 ::= StructureTupleCondition               ;
+BaseTupleCondition        . TupleCondition2 ::= GroundTupleCondition                  ;
+_                . TupleCondition    ::= TupleCondition1                              ;
+_                . TupleCondition1   ::= TupleCondition2                              ;
+_                . TupleCondition2   ::= "((" TupleCondition "))"                     ;
+
+--TupleStructCond  . StructureTupleCondition ::= "(" [TupleCondition] ")"               ;
+TupleValCond     . StructureTupleCondition ::= "(" [ValueCondition] ")"               ;
+
+TupleLogicGround . GroundTupleCondition ::= LogicalGround                             ;
+
+DisjunctValueCondition . ValueCondition  ::= ValueCondition "||" ValueCondition1      ;
+ConjunctValueCondition . ValueCondition  ::= ValueCondition1 "&" ValueCondition2      ;
+
+-- ********************************************************************************* --
+-- These ValueConditions come from the structure of the term language
+-- ********************************************************************************* --
+
+NegatedValueCondition     . ValueCondition2 ::= "~" ValueCondition2                   ;
+StructuralValueCondition  . ValueCondition2 ::= StructureValueCondition               ;
+BaseValueCondition        . ValueCondition2 ::= GroundValueCondition                  ;
+_                . ValueCondition    ::= ValueCondition1                              ;
+_                . ValueCondition1   ::= ValueCondition2                              ;
+_                . ValueCondition2   ::= "((" ValueCondition "))"                     ;
+
+ValueLogicGround . GroundValueCondition ::= LogicalGround                             ;
+
+ValueRecCond     . StructureValueCondition ::= "!?" RecordCondition                   ;
+ValueListCond    . StructureValueCondition ::= "[?" [ValueCondition] "?]"             ;
+ValueSetCond     . StructureValueCondition ::= "{?" [ValueCondition] "?}"             ;
+ValueLitCond     . StructureValueCondition ::= ValueLiteral                           ;
+
+ValueRecBodyCond . RecordCondition ::= "{{" [TupleCondition] ";" RecordCondition "}}" ;
+
+Verity           . LogicalGround        ::= "true"                                    ;
+Absurdity        . LogicalGround        ::= "false"                                   ;
+Nullity          . LogicalGround        ::= "null"                                    ;
+
+FieldTypeExpr    . FieldType         ::= TypeExpr                                     ;
+
+ArrayTypeExpr    . TypeExpr          ::= TypeExpr1 "[" Integer "]"                    ;
+RcrdTypeExpr     . TypeExpr1         ::= TypeFormals "{(" [TypeExpr] ")}"             ;
+RecTypeExpr      . TypeExpr1         ::= "rec" TypeName "." TypeExpr                  ;
+RefTypeExpr      . TypeExpr1         ::= TypeName                                     ;
+CollTypeExpr     . TypeExpr1         ::= CollType                                     ;
+GroundTypeExpr   . TypeExpr1         ::= GroundType                                   ;
+
+_                . TypeExpr1         ::= "((" TypeExpr "))"                           ;
+
+LListTypeExpr    . CollType          ::= "[" [TypeExpr] "]"                           ;
+SetTypeExpr      . CollType          ::= "{" [TypeExpr] "}"                           ;
+TupleTypeExpr    . CollType          ::= "(" [TypeExpr] ")"                           ;
+
+TypeIdent        . TypeName          ::= UIdent                                       ; 
+
+GroundInteger    . GroundType        ::= "int"                                        ;
+GroundDouble     . GroundType        ::= "double"                                     ;
+GroundString     . GroundType        ::= "string"                                     ;
+GroundChar       . GroundType        ::= "char"                                       ;
+
+TypeParameters   . TypeFormals       ::= "[" [TypeExpr] "]"                           ;
+
+Equality         . Comparison        ::= "=="                                         ;
+Less             . Comparison        ::= "<"                                          ;
+More             . Comparison        ::= ">"                                          ;
+LEq              . Comparison        ::= "<="                                         ;
+GEq              . Comparison        ::= ">="                                         ;
+
+ValueAddExpr     . ValueExpr         ::= ValueExpr "+" ValueExpr1                     ;
+ValueMultExpr    . ValueExpr1        ::= ValueExpr1 "*" ValueExpr2                    ;
+ValueArrAccExpr  . ValueExpr2        ::= ValueExpr2 "[" ValueExpr "]"                 ;
+ValueNegExpr     . ValueExpr2        ::= "-" ValueExpr3                               ;
+ValueVarExpr     . ValueExpr3        ::= ValueVariable                                ;
+ValueLitExpr     . ValueExpr3        ::= ValueLiteral                                 ;
+
+_                . ValueExpr         ::= ValueExpr1                                   ;
+_                . ValueExpr1        ::= ValueExpr2                                   ;
+_                . ValueExpr2        ::= ValueExpr3                                   ;
+_                . ValueExpr3        ::= "((" ValueExpr "))"                          ;
+
+ValueIdent       . ValueVariable     ::= LIdent                                       ;
+
+ValueRecLit      . ValueLiteral      ::= "!" RecordExpr3                              ;
+ValueRecProjLit  . ValueLiteral      ::= RecordExpr3 "/" FieldExpr                    ;
+ValueListLit     . ValueLiteral      ::= "[" [ValueExpr] "]"                          ;
+ValueSetLit      . ValueLiteral      ::= "{" [ValueExpr] "}"                          ;
+ValueIntLit      . ValueLiteral      ::= Integer                                      ;
+ValueDoubleLit   . ValueLiteral      ::= Double                                       ;
+ValueStringLit   . ValueLiteral      ::= String                                       ;
+ValueCharLit     . ValueLiteral      ::= Char                                         ;
+
+-- ********************************************************************************* --
+--                        Lists used in the syntax
+-- ********************************************************************************* --
+
+[]               . [Binding]         ::=                                              ;
+(: [])           . [Binding]         ::= Binding                                      ;
+(:)              . [Binding]         ::= Binding "," [Binding]                        ;
+
+[]               . [TupleDeclOrCond]  ::=                                             ;
+(: [])           . [TupleDeclOrCond]  ::= TupleDeclOrCond                             ;
+(:)              . [TupleDeclOrCond]  ::= TupleDeclOrCond "," [TupleDeclOrCond]       ;
+
+[]               . [TupleCondition]  ::=                                              ;
+(: [])           . [TupleCondition]  ::= TupleCondition                               ;
+(:)              . [TupleCondition]  ::= TupleCondition "," [TupleCondition]          ;
+
+[]               . [ValueCondition]  ::=                                              ;
+(: [])           . [ValueCondition]  ::= ValueCondition                               ;
+(:)              . [ValueCondition]  ::= ValueCondition "," [ValueCondition]          ;
+
+[]               . [TypeExpr]        ::=                                              ;
+(: [])           . [TypeExpr]        ::= TypeExpr                                     ;
+(:)              . [TypeExpr]        ::= TypeExpr "," [TypeExpr]                      ;
+
+[]               . [FieldExpr]       ::=                                              ;
+(: [])           . [FieldExpr]       ::= FieldExpr                                    ;
+(:)              . [FieldExpr]       ::= FieldExpr "," [FieldExpr]                    ;
+
+[]               . [TupleExpr]       ::=                                              ;
+(: [])           . [TupleExpr]       ::= TupleExpr                                    ;
+(:)              . [TupleExpr]       ::= TupleExpr "," [TupleExpr]                    ;
+
+[]               . [TuplePtn]        ::=                                              ;
+(: [])           . [TuplePtn]        ::= TuplePtn                                     ;
+(:)              . [TuplePtn]        ::= TuplePtn "," [TuplePtn]                      ;
+
+[]               . [ValueExpr]       ::=                                              ;
+(: [])           . [ValueExpr]       ::= ValueExpr                                    ;
+(:)              . [ValueExpr]       ::= ValueExpr "," [ValueExpr]                    ;
+
+[]               . [FormalExpr]      ::=                                              ;
+(: [])           . [FormalExpr]      ::= FormalExpr                                   ;
+(:)              . [FormalExpr]      ::= FormalExpr "," [FormalExpr]                  ;
+
+[]               . [RLambdaExpr]     ::=                                              ;
+(: [])           . [RLambdaExpr]     ::= RLambdaExpr                                  ;
+(:)              . [RLambdaExpr]     ::= RLambdaExpr "," [RLambdaExpr]                ;
+
+comment "//"      ;
+comment "/*" "*/" ;
+
+-- entrypoints ValueExpr ;
+
+token UIdent (upper (letter | digit | '_')*) ;
+token LIdent (lower (letter | digit | '_')*) ;
+token Wild   '_' char* ;

@@ -19,12 +19,26 @@ import java.net.URI
 import java.util.UUID
 import java.io.StringReader
 
-trait Evaluator {
-  import scala.collection.JavaConversions._
+trait DomainAbbreviations {
+  def declSrc( e : DomainGen ) : RecordSource
+  def declTrgt( e : DomainGen ) : DomainPtn
+}
 
+trait TypeDependencies {
   type Domain
-  type Coll[A] <: Seq[A]
   type Name
+  type Ctxt
+
+  type Coll[A] <: Seq[A]
+  type Trgt = Either[Ctxt,Name]
+}
+
+trait Evaluator {
+  self : DomainAbbreviations with TypeDependencies =>
+
+      import scala.collection.JavaConversions._   
+
+  type Ctxt = DomainPtn
 
   class RColl[A](
     rcoll : Coll[Either[A,RColl[A]]]
@@ -44,12 +58,19 @@ trait Evaluator {
     new RColl[A]( coll )
   }
   
+  // hmmm ... looks like EvaluationContext should extend Maplike
   trait EvaluationContext {
-    def env : Map[Name,Normal]
+    def env : Map[Trgt,Normal]
+    def extend( envp : Map[Trgt,Normal] ) : EvaluationContext
   }
   class EvalCtxt(
-    val env : Map[Name,Normal]
-  ) extends EvaluationContext
+    val env : Map[Trgt,Normal]
+  ) extends EvaluationContext {
+    override def extend( envp : Map[Trgt,Normal] ) : EvaluationContext
+    = {
+      new EvalCtxt( env ++ envp )
+    }
+  }
 
   def bindExpr(
     binding : Binding,
@@ -63,7 +84,7 @@ trait Evaluator {
   def eval( rexpr : RecordExpr ) : Normal = {
     eval(
       rexpr,
-      new EvalCtxt( new HashMap[Name,Normal]( ) )
+      new EvalCtxt( new HashMap[Trgt,Normal]( ) )
     )
   }     
 
@@ -144,16 +165,130 @@ trait Evaluator {
     }    
   }
 
-  def evalExpr( expr : Intension, ctxt : EvaluationContext ) : Normal = {
-    expr.intensionbodyexpr_ match {
-      case intnBody : IntensionBody => {
-	normallyEmpty
+  def evalExpr(
+    expr : DomainCond,
+    ctxt : EvaluationContext
+  ) : List[Domain] => Boolean
+
+  def evalCondition(
+    cnd : DomainCond,
+    sem : List[Domain] => Boolean,
+    ctxt : EvaluationContext
+  ) : Boolean
+
+  def evalExpr(
+    expr : DomainPtn,
+    ctxt : EvaluationContext
+  ) : Normal
+
+  def satisfies(
+    cnds : Seq[DomainCond],
+    ctxt : EvaluationContext
+  ) : Boolean = {
+    def loop( cnds : Seq[DomainCond] ) : Boolean = {
+      cnds match {
+	case Nil => true
+	case cnd :: rcnds => {
+	  evalCondition( cnd, evalExpr( cnd, ctxt ), ctxt ) match {
+	    case true => loop( rcnds )
+	    case _ => false
+	  }
+	}
       }
     }
+    loop( cnds )
+  }
+  
+  def fill(
+    dptn : DomainPtn,
+    dval : Normal,
+    ctxt : EvaluationContext
+  ) : ( Map[Trgt,Normal], Normal )
+
+  def evalExpr( expr : Intension, ctxt : EvaluationContext ) : Normal = {
+//    record { ($H1 $A1 $A2) | $H1 <- R1, $A1 <- R2, $A2 <- R3, $A1 = $A2 }
+    expr.intensionbodyexpr_ match {
+      case intnBody : IntensionBody => {
+// 	 for( H1 <- eval( R1 ); A1 <- eval( R2 ); A2 <- eval( R3 )
+// 	   if A2 == A2 )
+// 	 yield { LAMBDA X, Y, Z. (H1, A1 A2 ) }
+	val dptn = intnBody.domainptn_
+	val dclOrCnds = intnBody.listdomaindeclorcond_
+	val dcls : Seq[DomainGen] =
+	  (dclOrCnds filter ( (doc) => doc.isInstanceOf[DomainGen] )).toList.asInstanceOf[Seq[DomainGen]]
+	val cnds : Seq[DomainCond] =
+	  (dclOrCnds filter ( (doc) => doc.isInstanceOf[DomainCond] )).toList.asInstanceOf[Seq[DomainCond]]
+
+	// create pairs of ( ptn-to-fill, domainSources )
+	
+	def loop( ctxt : EvaluationContext )
+	: ( Normal, EvaluationContext ) = {
+	  val envp = ( ctxt.env /: dcls )( 
+	    {
+	      ( acc, e ) => {
+		val dclTrgt = declTrgt( e )
+		val ( m, rSrc ) : ( Map[Trgt,Normal], Normal ) =
+		  fill( dclTrgt, acc( Left[DomainPtn,Name]( dclTrgt ) ), ctxt )
+		acc ++ List( ( Left[DomainPtn,Name]( dclTrgt ), rSrc ) )
+	      }
+	    }
+	  )
+
+	  val nCtxt = ctxt.extend( envp )
+
+	  if ( satisfies( cnds, nCtxt ) ) {
+	    ( evalExpr( dptn, nCtxt ), nCtxt )
+	  }
+	  else {
+	    loop( nCtxt )
+	  }
+	}
+
+	val nFormEnv =
+	  loop(
+	    ( ctxt /: dcls )( 
+	      {
+		( acc, e ) => {
+		  val envp : Map[Trgt,Normal] = acc.env
+		  val npair : List[ ( Trgt, Normal ) ] =
+		    List(
+		      ( Left[Ctxt,Name]( declTrgt( e ) ), evalExpr( declSrc( e ), acc ) )
+		    )
+		  val envpp : Map[Trgt,Normal] = envp ++ npair
+		  acc.extend(
+		    (		      
+		      envpp
+		    )
+		  )
+		}
+	      }
+	    )
+	  )
+
+	lazy val rslt : List[( Normal, EvaluationContext )] =
+	  nFormEnv :: rslt map( 
+	  {
+	    ( nfm ) => {
+	      nfm match {
+		case ( nf, m ) => {
+		  loop( m )
+		}
+	      }
+	    }
+	  }	    
+	)
+	
+	rslt( 0 )_1
+	
+      }
+    }
+    //normallyEmpty
   }
     
   def evalExpr( expr : Emptied, ctxt : EvaluationContext ) : Normal = {
     normallyEmpty
   }
+
+  def evalExpr( rsrc : RecordSource, ctxt : EvaluationContext ) : Normal
   
 }

@@ -724,4 +724,26 @@ trait Transitions[Ctxt] {
     }
     
   }
+
+  def reduce( machine : MACHINE, ctxt : Ctxt ) : ( Value, Ctxt ) = {
+    var tmstate = asTMState( machine )
+    var ktxt = ctxt 
+
+    while( !( tmstate.code.isEmpty ) ) {
+      reduceOnce( machine, ctxt ) match {
+	case ( r1M, nCtxt ) => {
+	  tmstate = asTMState( r1M )
+	  ktxt = nCtxt
+	}
+      }
+    }
+
+    tmstate.stack match {
+      case Right( v ) :: stkRest => ( v, ktxt )
+      case _ => throw new Exception( "execution failed to produce a value" )
+    }
+  }
+}
+
+object NoCtxtTransitions extends Transitions[Unit] {
 }

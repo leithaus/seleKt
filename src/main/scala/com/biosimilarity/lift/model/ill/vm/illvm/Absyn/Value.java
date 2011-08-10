@@ -4,6 +4,7 @@ public abstract class Value implements java.io.Serializable {
   public abstract <R,A> R accept(Value.Visitor<R,A> v, A arg);
   public interface Visitor <R,A> {
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.UnitV p, A arg);
+    public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV p, A arg);
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV p, A arg);
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InrV p, A arg);
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.FclV p, A arg);

@@ -40,6 +40,7 @@ READ             . Instruction       ::= IllREAD                          ;
 DUP              . Instruction       ::= IllDUP                           ;
 
 UnitV            . Value             ::= "*"                              ;
+PairV            . Value             ::= "(" Value "," Value ")"          ;
 InlV             . Value             ::= "inl" "(" Value ")"              ;
 InrV             . Value             ::= "inr" "(" Value ")"              ;
 FclV             . Value             ::= "fcl" "(" ILLCode ";" Env ")"    ;

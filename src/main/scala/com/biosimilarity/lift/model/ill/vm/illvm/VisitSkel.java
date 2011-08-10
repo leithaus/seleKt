@@ -280,6 +280,15 @@ public class VisitSkel
 
       return null;
     }
+    public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV p, A arg)
+    {
+      /* Code For PairV Goes Here */
+
+      p.value_1.accept(new ValueVisitor<R,A>(), arg);
+      p.value_2.accept(new ValueVisitor<R,A>(), arg);
+
+      return null;
+    }
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV p, A arg)
     {
       /* Code For InlV Goes Here */

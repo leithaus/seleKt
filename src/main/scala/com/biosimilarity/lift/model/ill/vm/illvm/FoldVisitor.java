@@ -165,6 +165,12 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
       R r = leaf(arg);
       return r;
     }
+    public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.value_1.accept(this, arg), r, arg);
+      r = combine(p.value_2.accept(this, arg), r, arg);
+      return r;
+    }
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV p, A arg) {
       R r = leaf(arg);
       r = combine(p.value_.accept(this, arg), r, arg);

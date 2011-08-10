@@ -118,6 +118,7 @@ Instruction ::= IllPUSHENV:p_1  {: RESULT = new com.biosimilarity.seleKt.model.i
   | IllDUP:p_1  {: RESULT = new com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.DUP(p_1); :}
 ;
 Value ::= _SYMB_5  {: RESULT = new com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.UnitV(); :} 
+  | _SYMB_0 Value:p_2 _SYMB_6 Value:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV(p_2,p_4); :}
   | _SYMB_14 _SYMB_0 Value:p_3 _SYMB_2  {: RESULT = new com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV(p_3); :}
   | _SYMB_15 _SYMB_0 Value:p_3 _SYMB_2  {: RESULT = new com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InrV(p_3); :}
   | _SYMB_13 _SYMB_0 ILLCode:p_3 _SYMB_1 Env:p_5 _SYMB_2  {: RESULT = new com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.FclV(p_3,p_5); :}

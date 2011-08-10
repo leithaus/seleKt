@@ -60,6 +60,7 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
     }
 /* Value */
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.UnitV p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InrV p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.FclV p, A arg) { return visitDefault(p, arg); }

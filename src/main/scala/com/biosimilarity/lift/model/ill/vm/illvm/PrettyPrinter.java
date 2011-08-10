@@ -521,6 +521,17 @@ public class PrettyPrinter
        render("*");
        if (_i_ > 0) render(_R_PAREN);
     }
+    else     if (foo instanceof com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV)
+    {
+       com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV _pairv = (com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       render("(");
+       pp(_pairv.value_1, 0);
+       render(",");
+       pp(_pairv.value_2, 0);
+       render(")");
+       if (_i_ > 0) render(_R_PAREN);
+    }
     else     if (foo instanceof com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV)
     {
        com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV _inlv = (com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV) foo;
@@ -916,6 +927,15 @@ public class PrettyPrinter
     {
        com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.UnitV _unitv = (com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.UnitV) foo;
        render("UnitV");
+    }
+    if (foo instanceof com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV)
+    {
+       com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV _pairv = (com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV) foo;
+       render("(");
+       render("PairV");
+       sh(_pairv.value_1);
+       sh(_pairv.value_2);
+       render(")");
     }
     if (foo instanceof com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV)
     {

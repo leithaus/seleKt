@@ -218,6 +218,13 @@ public class ComposVisitor<A> implements
 
       return new com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.UnitV();
     }
+    public Value visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV p, A arg)
+    {
+      Value value_1 = p.value_1.accept(this, arg);
+      Value value_2 = p.value_2.accept(this, arg);
+
+      return new com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.PairV(value_1, value_2);
+    }
     public Value visit(com.biosimilarity.seleKt.model.ill.vm.illvm.Absyn.InlV p, A arg)
     {
       Value value_ = p.value_.accept(this, arg);

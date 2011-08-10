@@ -1,0 +1,86 @@
+-- -*- mode: Haskell;-*- 
+-- Filename:    illvm.cf 
+-- Authors:     lgm                                                    
+-- Creation:    Tue Aug  9 14:28:01 2011 
+-- Copyright:   Not supplied 
+-- Description: 
+-- ------------------------------------------------------------------------
+
+MACHINE          . State             ::= "ILLVM" "(" Stack ";" Env ";" ILLCode ";" Dump ")" ;
+
+MSTACK           . Stack             ::= [EnvOrVal]                       ;
+MDUMP            . Dump              ::= [Frame]                          ;
+
+STACKENV         . EnvOrVal          ::= Env                              ;
+STACKVAL         . EnvOrVal          ::= Value                            ;
+STACKFRAME       . Frame             ::= "[" Stack ";" Env ";" ILLCode "]" ;
+
+CODESEQ          . ILLCode           ::= [Instruction]                    ;
+
+PUSHENV          . Instruction       ::= IllPUSHENV                       ;
+HEAD             . Instruction       ::= IllHD                            ;
+TAIL             . Instruction       ::= IllTL                            ;
+RET              . Instruction       ::= IllRET                           ;
+PUSH             . Instruction       ::= IllPUSH                          ;
+POP              . Instruction       ::= IllPOP                           ;
+MAKEFCL          . Instruction       ::= "MAKEFCL" "(" ILLCode ")"        ;
+AP               . Instruction       ::= IllAP                            ;
+UNIT             . Instruction       ::= IllUNIT                          ;
+UNUNIT           . Instruction       ::= IllUNUNIT                        ;
+PAIR             . Instruction       ::= IllPAIR                          ;
+UNPAIR           . Instruction       ::= IllUNPAIR                        ;
+MAKECCL          . Instruction       ::= "MAKECCL" "(" ILLCode ";" ILLCode ")" ;
+FST              . Instruction       ::= IllFST                           ;
+SND              . Instruction       ::= IllSND                           ;
+INL              . Instruction       ::= IllINL                           ;
+INR              . Instruction       ::= IllINR                           ;
+CASE             . Instruction       ::= "CASE" "(" ILLCode ";" ILLCode ")" ;
+MAKEOCL          . Instruction       ::= "MAKEOCL" "(" ILLCode ")"        ;
+READ             . Instruction       ::= IllREAD                          ;
+DUP              . Instruction       ::= IllDUP                           ;
+
+UnitV            . Value             ::= "*"                              ;
+InlV             . Value             ::= "inl" "(" Value ")"              ;
+InrV             . Value             ::= "inr" "(" Value ")"              ;
+FclV             . Value             ::= "fcl" "(" ILLCode ";" Env ")"    ;
+CclV             . Value             ::= "ccl" "(" ILLCode ";" ILLCode ";" Env ")" ;
+OclV             . Value             ::= "ocl" "(" ILLCode ";" Env ")"    ;
+
+ENVIRONMENT      . Env               ::= [Value]                          ;
+
+[]               . [Frame]           ::=                                  ;
+(: [])           . [Frame]           ::= Frame                            ;
+(:)              . [Frame]           ::= Frame "," [Frame]                ;
+
+[]               . [Instruction]     ::=                                  ;
+(: [])           . [Instruction]     ::= Instruction                      ;
+(:)              . [Instruction]     ::= Instruction "," [Instruction]    ;
+
+[]               . [EnvOrVal]        ::=                                  ;
+(: [])           . [EnvOrVal]        ::= EnvOrVal                         ;
+(:)              . [EnvOrVal]        ::= EnvOrVal "," [EnvOrVal]          ;
+
+[]               . [Value]           ::=                                  ;
+(: [])           . [Value]           ::= Value                            ;
+(:)              . [Value]           ::= Value "," [Value]                ;
+
+comment "//"      ;
+comment "/*" "*/" ;
+
+token  IllPUSHENV ('P' 'U' 'S' 'H' 'E' 'N' 'V') ;
+token  IllHD ('H' 'D') ;
+token  IllTL ('T' 'L') ;
+token  IllRET ('R' 'E' 'T') ;
+token  IllPUSH ('P' 'U' 'S' 'H') ;
+token  IllPOP ('P' 'O' 'P') ;
+token  IllAP ('A' 'P') ;
+token  IllUNIT ('U' 'N' 'I' 'T') ;
+token  IllUNUNIT ('U' 'N' 'U' 'N' 'I' 'T') ;
+token  IllPAIR ('P' 'A' 'I' 'R') ;
+token  IllUNPAIR ('U' 'N' 'P' 'A' 'I' 'R') ;
+token  IllFST ('F' 'S' 'T') ;
+token  IllSND ('S' 'N' 'D') ;
+token  IllINL ('I' 'N' 'L') ;
+token  IllINR ('I' 'N' 'R') ;
+token  IllREAD ('R' 'E' 'A' 'D') ;
+token  IllDUP ('D' 'U' 'P') ;

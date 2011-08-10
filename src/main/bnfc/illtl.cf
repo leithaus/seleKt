@@ -1,0 +1,69 @@
+-- -*- mode: Haskell;-*- 
+-- Filename:    illtl.cf 
+-- Authors:     lgm                                                    
+-- Creation:    Tue Aug  9 14:52:50 2011 
+-- Copyright:   Not supplied 
+-- Description: 
+-- ------------------------------------------------------------------------
+
+Application      . RLLExpr       ::= RLLExpr [RLLExpr1] ";"               ;
+Separation       . RLLExpr1      ::= RLLExpr1 "(x)" RLLExpr2              ;
+Inclusion        . RLLExpr1      ::= "<" RLLExpr2 "," RLLExpr2 ">"        ;
+Abstraction      . RLLExpr2      ::= "lambda" [FormalExpr] "." RLLExpr2   ;
+InjectionLeft    . RLLExpr2      ::= "inl" "(" RLLExpr2 ")"               ;
+InjectionRight   . RLLExpr2      ::= "inr" "(" RLLExpr2 ")"               ;
+Duration         . RLLExpr2      ::= "!" RLLExpr2                         ;
+Deconstruction   . RLLExpr2      ::= "let" RLLExpr2 "be" RLLPtrn "in" RLLExpr2 ;
+Selection        . RLLExpr2      ::= "case" RLLExpr2 "of" RLLLeftPtrn "=>" RLLExpr2 ";"  RLLRightPtrn "=>" RLLExpr2 ;
+
+--Continuation     . RLLExpr1      ::= ContinueExpr                         ;
+
+Mention          . RLLExpr3      ::= FormalExpr                           ;
+Value            . RLLExpr3      ::= ValueExpr                            ;
+
+_                . RLLExpr       ::= RLLExpr1                             ;
+_                . RLLExpr1      ::= RLLExpr2                             ;
+_                . RLLExpr2      ::= RLLExpr3                             ;
+_                . RLLExpr3      ::= "(" RLLExpr ")"                      ;
+
+InLeft           . RLLLeftPtrn   ::= "inl" "(" FormalExpr ")"             ;
+InRight          . RLLRightPtrn  ::= "inr" "(" FormalExpr ")"             ;
+
+InclusionLeft    . RLLPtrn       ::= "<" FormalExpr "," "_" ">"           ;
+InclusionRight   . RLLPtrn       ::= "<" "_" "," FormalExpr ">"           ;
+Extraction       . RLLPtrn       ::=  "!" FormalExpr                      ;
+Wildcard         . RLLPtrn       ::= "_"                                  ;
+Unit             . RLLPtrn       ::= "*"                                  ;
+
+--_                . ValueLiteral      ::= "(" RLLExpr ")"                  ;
+
+--Prompt           . ContinueExpr      ::= "newPrompt"                      ;
+--PushPrompt       . ContinueExpr      ::= "pushPrompt" RLLExpr2 RLLExpr2   ;
+--Subcontinuation  . ContinueExpr      ::= "withSubCont" RLLExpr2 RLLExpr2  ;
+--PushSubCont      . ContinueExpr      ::= "pushSubCont" RLLExpr2 RLLExpr2  ;
+
+Transcription    . FormalExpr        ::= "@" "<" RLLExpr2 ">"             ;
+AtomLiteral      . FormalExpr        ::= Ident                            ;
+
+DecimalLiteral   . ValueExpr         ::= Double                           ;
+IntegerLiteral   . ValueExpr         ::= Integer                          ;
+StringLiteral    . ValueExpr         ::= String                           ;
+
+[]               . [RLLExpr1]        ::=                                  ;
+(: [])           . [RLLExpr1]        ::= RLLExpr1                         ;
+(:)              . [RLLExpr1]        ::= RLLExpr1 "," [RLLExpr1]          ;
+
+[]               . [FormalExpr]      ::=                                  ;
+(: [])           . [FormalExpr]      ::= FormalExpr                       ;
+(:)              . [FormalExpr]      ::= FormalExpr "," [FormalExpr]      ;
+
+comment "//"      ;
+comment "/*" "*/" ;
+
+-- entrypoints RecordExpr, RLambdaExpr, ValueExpr ;
+-- entrypoints RLambdaExpr2 ;
+
+token UIdent (upper (letter | digit | '_')*) ;
+--token LIdent (lower (letter | digit | '_')*) ;
+--token Wild   '_' char* ;
+--token Wild   '_' ;

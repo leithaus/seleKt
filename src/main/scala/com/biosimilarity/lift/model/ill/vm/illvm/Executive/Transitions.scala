@@ -27,13 +27,18 @@ trait Transitions[Ctxt] {
   }
 
   def reduceOnce( machine : MACHINE, ctxt : Ctxt ) : ( MACHINE, Ctxt ) = {
-    val tmstate = asTMState( machine )
+    val ( tmstate, nctxt ) =     
+      reduceOnce( asTMState( machine ), ctxt )
+    ( asMachine( tmstate ), nctxt )
+  }
+
+  def reduceOnce( tmstate : TMState, ctxt : Ctxt ) : ( TMState, Ctxt ) = {
     tmstate.code match {
       case instr :: instructions => {
 	instr match {
 	  case pushEnv : PUSHENV => {
 	    (
-	      new MACHINE(
+	      new TMState(
 		push( tmstate.env, tmstate.stack ),
 		tmstate.env,
 		instructions,
@@ -48,7 +53,7 @@ trait Transitions[Ctxt] {
 		fromEnv( stkEnv ) match {
 		  case v :: l => {
 		    (
-		      new MACHINE(
+		      new TMState(
 			push( v, tmstate.stack ),
 			tmstate.env,
 			instructions,
@@ -85,7 +90,7 @@ trait Transitions[Ctxt] {
 		fromEnv( stkEnv ) match {
 		  case v :: l => {
 		    (
-		      new MACHINE(
+		      new TMState(
 			push( l, tmstate.stack ),
 			tmstate.env,
 			instructions,
@@ -124,7 +129,7 @@ trait Transitions[Ctxt] {
 		    fromFrame( frame ) match {
 		      case ( s, e, c ) => {
 			(
-			  new MACHINE(
+			  new TMState(
 			    push( v, s ),
 			    e,
 			    c,
@@ -170,7 +175,7 @@ trait Transitions[Ctxt] {
 	    tmstate.stack match {
 	      case Right( v ) :: stkRest => {
 		(
-		  new MACHINE(
+		  new TMState(
 		    stkRest,
 		    v :: tmstate.env,
 		    instructions,
@@ -194,7 +199,7 @@ trait Transitions[Ctxt] {
 	    tmstate.env match {
 	      case v :: envRest => {
 		(
-		  new MACHINE(
+		  new TMState(
 		    tmstate.stack,
 		    envRest,
 		    instructions,
@@ -218,7 +223,7 @@ trait Transitions[Ctxt] {
 	    val fcl = 
 	      Right[Env,Value]( new FclV( makefcl.illcode_, tmstate.env ) )
 	    (
-	      new MACHINE(
+	      new TMState(
 		fcl :: tmstate.stack,
 		tmstate.env,
 		instructions,
@@ -229,7 +234,7 @@ trait Transitions[Ctxt] {
 	  }
 	  case unit : UNIT => {
 	    (
-	      new MACHINE(
+	      new TMState(
 		Right[Env,Value]( new UnitV() ) :: tmstate.stack,
 		tmstate.env,
 		instructions,
@@ -242,7 +247,7 @@ trait Transitions[Ctxt] {
 	    tmstate.stack match {
 	      case Right( v : UnitV ) :: stkRest => {
 		(
-		  new MACHINE(
+		  new TMState(
 		    stkRest,
 		    tmstate.env,
 		    instructions,
@@ -266,7 +271,7 @@ trait Transitions[Ctxt] {
 	    tmstate.stack match {
 	      case Right( v ) :: Right( w ) :: stkRest => {
 		(
-		  new MACHINE(
+		  new TMState(
 		    Right( new PairV( v, w ) ) :: stkRest,
 		    tmstate.env,
 		    instructions,
@@ -290,7 +295,7 @@ trait Transitions[Ctxt] {
 	    tmstate.stack match {
 	      case Right( vw : PairV ) :: stkRest => {
 		( 
-		  new MACHINE(
+		  new TMState(
 		    Right( vw.value_1 ) :: Right( vw.value_2 ) :: stkRest,
 		    tmstate.env,
 		    instructions,
@@ -322,7 +327,7 @@ trait Transitions[Ctxt] {
 			instructions
 		      )
 		    (
-		      new MACHINE(
+		      new TMState(
 			List(),
 			v :: fromEnv( fcl.env_ ),
 			fromILLCode( fcl.illcode_ ),
@@ -361,7 +366,7 @@ trait Transitions[Ctxt] {
 		asEnv( tmstate.env )
 	      )
 	    (
-	      new MACHINE(
+	      new TMState(
 		Right[Env,Value]( ccl ) :: tmstate.stack,
 		tmstate.env,
 		instructions,
@@ -380,7 +385,7 @@ trait Transitions[Ctxt] {
 		    instructions
 		  )
 		( 
-		  new MACHINE(
+		  new TMState(
 		    List(),
 		    fromEnv( ccl.env_ ),
 		    fromILLCode( ccl.illcode_1 ),
@@ -410,7 +415,7 @@ trait Transitions[Ctxt] {
 		    instructions
 		  )
 		( 
-		  new MACHINE(
+		  new TMState(
 		    List(),
 		    fromEnv( ccl.env_ ),
 		    fromILLCode( ccl.illcode_2 ),
@@ -434,7 +439,7 @@ trait Transitions[Ctxt] {
 	    tmstate.stack match {
 	      case Right( v ) :: stkRest => {
 		(
-		  new MACHINE(
+		  new TMState(
 		    Right[Env,Value]( new InlV( v ) ) :: stkRest,
 		    tmstate.env,
 		    instructions,
@@ -458,7 +463,7 @@ trait Transitions[Ctxt] {
 	    tmstate.stack match {
 	      case Right( v ) :: stkRest => {
 		(
-		  new MACHINE(
+		  new TMState(
 		    Right[Env,Value]( new InrV( v ) ) :: stkRest,
 		    tmstate.env,
 		    instructions,
@@ -488,7 +493,7 @@ trait Transitions[Ctxt] {
 		    instructions
 		  )
 		(
-		  new MACHINE(
+		  new TMState(
 		    List(),
 		    v.value_ :: tmstate.env,
 		    fromILLCode( kase.illcode_1 ),
@@ -505,7 +510,7 @@ trait Transitions[Ctxt] {
 		    instructions
 		  )
 		(
-		  new MACHINE(
+		  new TMState(
 		    List(),
 		    v.value_ :: tmstate.env,
 		    fromILLCode( kase.illcode_2 ),
@@ -529,7 +534,7 @@ trait Transitions[Ctxt] {
 	    val ocl = 
 	      Right[Env,Value]( new OclV( makeocl.illcode_, tmstate.env ) )
 	    (
-	      new MACHINE(
+	      new TMState(
 		ocl :: tmstate.stack,
 		tmstate.env,
 		instructions,
@@ -548,7 +553,7 @@ trait Transitions[Ctxt] {
 		    instructions
 		  )
 		( 
-		  new MACHINE(
+		  new TMState(
 		    List(),
 		    fromEnv( ocl.env_ ),
 		    fromILLCode( ocl.illcode_ ),
@@ -572,7 +577,7 @@ trait Transitions[Ctxt] {
 	    tmstate.stack match {
 	      case Right( v ) :: stkRest => {
 		(
-		  new MACHINE(
+		  new TMState(
 		    Right( v ) :: Right( v ) :: stkRest,
 		    tmstate.env,
 		    instructions,
@@ -594,25 +599,29 @@ trait Transitions[Ctxt] {
 	  }
 	}
       }
-      case _ => ( machine, ctxt )
+      case _ => ( tmstate, ctxt )
     }
     
   }
 
   def reduce( machine : MACHINE, ctxt : Ctxt ) : ( Value, Ctxt ) = {
-    var tmstate = asTMState( machine )
+    reduce( asTMState( machine ), ctxt )
+  }
+
+  def reduce( tmstate : TMState, ctxt : Ctxt ) : ( Value, Ctxt ) = {
+    var vmstate = tmstate
     var ktxt = ctxt 
 
-    while( !( tmstate.code.isEmpty ) ) {
-      reduceOnce( machine, ctxt ) match {
-	case ( r1M, nCtxt ) => {
-	  tmstate = asTMState( r1M )
+    while( !( vmstate.code.isEmpty ) ) {
+      reduceOnce( vmstate, ctxt ) match {
+	case ( r1state, nCtxt ) => {
+	  vmstate = r1state
 	  ktxt = nCtxt
 	}
       }
     }
 
-    tmstate.stack match {
+    vmstate.stack match {
       case Right( v ) :: stkRest => ( v, ktxt )
       case _ => throw new Exception( "execution failed to produce a value" )
     }

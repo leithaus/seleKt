@@ -41,6 +41,7 @@ class Boot {
       Menu(Loc("Static", Link(List("static"), true, "/static/index"), 
 	       "Static Content")) ::
       Menu(Loc("REPLForm.1", List( "AJAXREPLForm" ), "R-E-P-L", If(User.loggedIn_? _, "x"))) ::
+      Menu(Loc("RLLREPLForm.1", List( "RLLREPLForm" ), "R-E-P-L", If(User.loggedIn_? _, "x"))) ::
       Menu(Loc("GrammarSpec.1", List( "GrammarSpec" ), "Grammar", If(User.loggedIn_? _, "x"))) ::
       Menu(Loc("file_upload", List( "file_upload" ), "File Upload", If(User.loggedIn_? _, "x") )) ::
       // Menu entries for the User management stuff

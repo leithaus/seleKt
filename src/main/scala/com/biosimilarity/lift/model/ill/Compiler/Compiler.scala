@@ -24,7 +24,10 @@ trait Compiler[Ctxt] {
   def wellFormed(
     rllExpr : RLLExpr,
     vctxt : Set[FormalExpr]
-  ) : Boolean
+  ) : Boolean = {
+    // TBD
+    true
+  }
 
   def fstOccurs(
     lvars : List[FormalExpr],
@@ -104,7 +107,7 @@ trait Compiler[Ctxt] {
     ctxt : Ctxt
   ) : ( List[Instruction], Ctxt ) = {
     rllExpr match {
-      /* t u (*) l = u (*) l | [PUSH] | t (*) l [AP] */
+      // t u (*) l = u (*) l | [PUSH] | t (*) l [AP]
       case ap : Application => {
 	val ( opcode, opctxt ) =
 	  compile( ap.rllexpr_, lvars, ctxt )
@@ -126,7 +129,7 @@ trait Compiler[Ctxt] {
 	
 	( ncode, ctxt )
       }
-      /* t (x) u (*) l = t (*) l | u (*) l | [PAIR] */
+      // t (x) u (*) l = t (*) l | u (*) l | [PAIR]
       case sep : Separation => {
 	val ( tcode, tctxt ) = 
 	  compile(
@@ -149,7 +152,7 @@ trait Compiler[Ctxt] {
 		
 	( ncode, ctxt )
       }
-      /* <t,u> (*) l = [MAKECCL(t (*) l | [RET],u (*) l | [RET])]*/
+      // <t,u> (*) l = [MAKECCL(t (*) l | [RET],u (*) l | [RET])]
       case incl : Inclusion => {
 	val ( tcode, tctxt ) = 
 	  compile(
@@ -171,7 +174,7 @@ trait Compiler[Ctxt] {
 		
 	( List[Instruction]( makeccl ) , ctxt )
       }
-      /* lambda x.t (*) l = [MAKEFCL( t (*) x:l | [POP,RET])] */
+      // lambda x.t (*) l = [MAKEFCL( t (*) x:l | [POP,RET])]
       case abs : Abstraction => {	
 	val ( bcode, bctxt ) =
 	  compile(
@@ -185,7 +188,7 @@ trait Compiler[Ctxt] {
 	
 	( List[Instruction]( makefcl ), ctxt )
       }
-      /* inl( t ) (*) l = t (*) l | [INL] */
+      // inl( t ) (*) l = t (*) l | [INL]
       case inl : InjectionLeft => {
 	val ( ilcode, ilctxt ) =
 	  compile( inl.rllexpr_, lvars, ctxt )
@@ -194,7 +197,7 @@ trait Compiler[Ctxt] {
 	
 	( ncode, ctxt )
       }
-      /* inr( t ) (*) l = t (*) l | [INR] */
+      // inr( t ) (*) l = t (*) l | [INR]
       case inr : InjectionRight => {
 	val ( ircode, irctxt ) =
 	  compile( inr.rllexpr_, lvars, ctxt )
@@ -203,7 +206,7 @@ trait Compiler[Ctxt] {
 	
 	( ncode, ctxt )
       }
-      /* !t (*) l = [MAKEOCL( t (*) l | [RET])] */
+      // !t (*) l = [MAKEOCL( t (*) l | [RET])]
       case dur : Duration => {
 	val ( dcode, dctxt ) =
 	  compile( dur.rllexpr_, lvars, ctxt )
@@ -215,7 +218,7 @@ trait Compiler[Ctxt] {
       }
       case dtor : Deconstruction => {
 	dtor.rllptrn_ match {
-	  /* let t be * in u (*) l = t (*) l | [UNUNIT] | u (*) l */
+	  // let t be * in u (*) l = t (*) l | [UNUNIT] | u (*) l
 	  case unitPtn : UnitPtn => {
 	    val ( tcode, tctxt ) = 
 	      compile(
@@ -239,8 +242,9 @@ trait Compiler[Ctxt] {
 	    ( ncode, ctxt )
 	  }
 	  case sepPtn : SeparationPtn => {
-	    /* let t be x (*) y in u (*) l =
-	     t (*) l | [UNPAIR,PUSH,PUSH] | u (*) x : y : l | [POP,POP] */
+	    // let t be x (*) y in u (*) l 
+	    // =
+	    // t (*) l | [UNPAIR,PUSH,PUSH] | u (*) x : y : l | [POP,POP]
 	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
@@ -267,8 +271,9 @@ trait Compiler[Ctxt] {
 	    ( ncode, ctxt )
 	  }
 	  case dupPtn : DuplicationPtn => {
-	    /* let t be x @ y in u (*) l =
-	     t (*) l | [DUP,PUSH,PUSH] | u (*) x : y : l | [POP,POP] */
+	    // let t be x @ y in u (*) l 
+	    // =
+	    // t (*) l | [DUP,PUSH,PUSH] | u (*) x : y : l | [POP,POP]
 	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
@@ -298,8 +303,9 @@ trait Compiler[Ctxt] {
 		    
 	    ( ncode, ctxt )
 	  }
-	  /* let t be <x,_> in u (*) l =
-           t (*) l | [FST,PUSH] | u (*) x:l | [POP]]*/
+	  // let t be <x,_> in u (*) l 
+	  // =
+          // t (*) l | [FST,PUSH] | u (*) x:l | [POP]]
 	  case inclPtn : InclusionLeft => {
 	    val ( tcode, tctxt ) = 
 	      compile(
@@ -326,8 +332,9 @@ trait Compiler[Ctxt] {
 		    
 	    ( ncode, ctxt )
 	  }
-	  /* let t be <x,_> in u (*) l =
-           t (*) l | [SND,PUSH] | u (*) x:l | [POP]]*/
+	  // let t be <x,_> in u (*) l 
+	  // =
+          // t (*) l | [SND,PUSH] | u (*) x:l | [POP]]
 	  case incrPtn : InclusionRight => {
 	    val ( tcode, tctxt ) = 
 	      compile(
@@ -355,8 +362,9 @@ trait Compiler[Ctxt] {
 	    ( ncode, ctxt )
 	  }
 	  case extrPtn : Extraction => {
-	    /* let t be !x in u (*) l =
-	     t (*) l | [READ,PUSH] | u (*) x : l | [POP] */
+	    // let t be !x in u (*) l 
+	    // =
+	    // t (*) l | [READ,PUSH] | u (*) x : l | [POP]
 	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
@@ -383,7 +391,7 @@ trait Compiler[Ctxt] {
 	    ( ncode, ctxt )
 	  }
 	  case wcPtn : Wildcard => {	    
-	    /* let t be _ in u (*) l = u (*) l */
+	    // let t be _ in u (*) l = u (*) l
 	    val ( ucode, uctxt ) = 
 	      compile(
 		dtor.rllexpr_2,
@@ -395,15 +403,14 @@ trait Compiler[Ctxt] {
 	  }
 	}
       }
-      /* case t of inl( x ) => u | inr( y ) => v (*) l
-       =
-         t (*) l | [CASE( c1, c2 )]
-	 
-       where
-
-         c1 = u (*) x : l | [POP,RET]
-	 c2 = u (*) y : l | [POP,RET]
-       */
+      // case t of inl( x ) => u | inr( y ) => v (*) l
+      // =
+      // t (*) l | [CASE( c1, c2 )]
+      //
+      // where
+      //
+      // c1 = u (*) x : l | [POP,RET]
+      // c2 = u (*) y : l | [POP,RET]      
       case sel : Selection => {
 	val ( tcode, tctxt ) = 
 	  compile(
@@ -463,7 +470,7 @@ trait Compiler[Ctxt] {
 		
 	( ncode, ctxt )
       }
-      /* x (*) l = [PUSHENV] | [TL,...,TL] | [HD] */
+      // x (*) l = [PUSHENV] | [TL,...,TL] | [HD]
       case mntn : Mention => {	
 	val tls =
 	  (
@@ -481,7 +488,7 @@ trait Compiler[Ctxt] {
       }
       case vl : SynVal => {
 	vl match {
-	  /* * (*) l = [UNIT] */
+	  // * (*) l = [UNIT] 
 	  case ul : UnitLiteral => {	    
 	    ( List( new UNIT( "UNIT" ) ) , ctxt )
 	  }
@@ -502,3 +509,5 @@ trait Compiler[Ctxt] {
     }
   }
 }
+
+object CompilerNoCtxt extends Compiler[Unit]

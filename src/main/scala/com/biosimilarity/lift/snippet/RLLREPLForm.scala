@@ -16,9 +16,9 @@ import com.biosimilarity.lift.model.REPL
 
 import scala.xml._
 
-class REPLForm {
+class RLLREPLForm {
   val theREPL = new REPL()
-  var theTerm : String = "{ }"
+  var theTerm : String = "*"
   var theClientRequestStr : String = evalStr()
 
   def evalStr() = theTerm

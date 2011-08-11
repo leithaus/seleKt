@@ -6,6 +6,7 @@ public abstract class ValueExpr implements java.io.Serializable {
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DecimalLiteral p, A arg);
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.IntegerLiteral p, A arg);
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.StringLiteral p, A arg);
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral p, A arg);
 
   }
 

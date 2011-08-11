@@ -32,11 +32,13 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
 /* RLLPtrn */
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionRight p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Extraction p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Wildcard p, A arg) { return visitDefault(p, arg); }
-    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn p, A arg) { return visitDefault(p, arg); }
     public R visitDefault(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.RLLPtrn p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
@@ -50,6 +52,7 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DecimalLiteral p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.IntegerLiteral p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.StringLiteral p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral p, A arg) { return visitDefault(p, arg); }
     public R visitDefault(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.ValueExpr p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }

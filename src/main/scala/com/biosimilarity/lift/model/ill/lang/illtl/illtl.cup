@@ -44,9 +44,9 @@ terminal _SYMB_6;    //   (
 terminal _SYMB_7;    //   )
 terminal _SYMB_8;    //   !
 terminal _SYMB_9;    //   =>
-terminal _SYMB_10;    //   _
-terminal _SYMB_11;    //   *
-terminal _SYMB_12;    //   @
+terminal _SYMB_10;    //   @
+terminal _SYMB_11;    //   _
+terminal _SYMB_12;    //   *
 terminal _SYMB_13;    //   be
 terminal _SYMB_14;    //   case
 terminal _SYMB_15;    //   in
@@ -91,18 +91,21 @@ RLLLeftPtrn ::= _SYMB_16 _SYMB_6 FormalExpr:p_3 _SYMB_7  {: RESULT = new com.bio
 ;
 RLLRightPtrn ::= _SYMB_17 _SYMB_6 FormalExpr:p_3 _SYMB_7  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InRight(p_3); :} 
 ;
-RLLPtrn ::= _SYMB_2 FormalExpr:p_2 _SYMB_3 _SYMB_10 _SYMB_4  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft(p_2); :} 
-  | _SYMB_2 _SYMB_10 _SYMB_3 FormalExpr:p_4 _SYMB_4  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionRight(p_4); :}
+RLLPtrn ::= FormalExpr:p_1 _SYMB_1 FormalExpr:p_3  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn(p_1,p_3); :} 
+  | FormalExpr:p_1 _SYMB_10 FormalExpr:p_3  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn(p_1,p_3); :}
+  | _SYMB_2 FormalExpr:p_2 _SYMB_3 _SYMB_11 _SYMB_4  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft(p_2); :}
+  | _SYMB_2 _SYMB_11 _SYMB_3 FormalExpr:p_4 _SYMB_4  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionRight(p_4); :}
   | _SYMB_8 FormalExpr:p_2  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Extraction(p_2); :}
-  | _SYMB_10  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Wildcard(); :}
-  | _SYMB_11  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit(); :}
+  | _SYMB_11  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Wildcard(); :}
+  | _SYMB_12  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn(); :}
 ;
-FormalExpr ::= _SYMB_12 _SYMB_2 RLLExpr2:p_3 _SYMB_4  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Transcription(p_3); :} 
+FormalExpr ::= _SYMB_10 _SYMB_2 RLLExpr2:p_3 _SYMB_4  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Transcription(p_3); :} 
   | _IDENT_:p_1  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.AtomLiteral(p_1); :}
 ;
 ValueExpr ::= _DOUBLE_:p_1  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DecimalLiteral(p_1); :} 
   | _INTEGER_:p_1  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.IntegerLiteral(p_1); :}
   | _STRING_:p_1  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.StringLiteral(p_1); :}
+  | _SYMB_12  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral(); :}
 ;
 ListRLLExpr1 ::=  /* empty */  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.ListRLLExpr(); :} 
   | RLLExpr1:p_1  {: RESULT = new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.ListRLLExpr(); RESULT.addLast(p_1); :}

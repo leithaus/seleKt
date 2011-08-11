@@ -29,11 +29,13 @@ _                . RLLExpr3      ::= "(" RLLExpr ")"                      ;
 InLeft           . RLLLeftPtrn   ::= "inl" "(" FormalExpr ")"             ;
 InRight          . RLLRightPtrn  ::= "inr" "(" FormalExpr ")"             ;
 
+SeparationPtn    . RLLPtrn       ::= FormalExpr "(x)" FormalExpr          ;
+DuplicationPtn   . RLLPtrn       ::= FormalExpr "@" FormalExpr            ;
 InclusionLeft    . RLLPtrn       ::= "<" FormalExpr "," "_" ">"           ;
 InclusionRight   . RLLPtrn       ::= "<" "_" "," FormalExpr ">"           ;
 Extraction       . RLLPtrn       ::=  "!" FormalExpr                      ;
 Wildcard         . RLLPtrn       ::= "_"                                  ;
-Unit             . RLLPtrn       ::= "*"                                  ;
+UnitPtn          . RLLPtrn       ::= "*"                                  ;
 
 --_                . ValueLiteral      ::= "(" RLLExpr ")"                  ;
 
@@ -48,6 +50,7 @@ AtomLiteral      . FormalExpr        ::= Ident                            ;
 DecimalLiteral   . ValueExpr         ::= Double                           ;
 IntegerLiteral   . ValueExpr         ::= Integer                          ;
 StringLiteral    . ValueExpr         ::= String                           ;
+UnitLiteral      . ValueExpr         ::= "*"                              ;
 
 []               . [RLLExpr1]        ::=                                  ;
 (: [])           . [RLLExpr1]        ::= RLLExpr1                         ;

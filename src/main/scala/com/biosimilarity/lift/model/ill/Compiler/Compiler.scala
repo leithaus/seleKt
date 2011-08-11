@@ -217,7 +217,18 @@ trait Compiler[Ctxt] {
 	( nstate, ctxt )
       }
       case dtor : Deconstruction => {
-	// TBD
+	dtor.rllptrn_ match {
+	  case u : UnitPtn => {
+	  }
+	  case incL : InclusionLeft => {
+	  }
+	  case incR : InclusionRight => {
+	  }
+	  case extr : Extraction => {
+	  }
+	  case wc : Wildcard => {
+	  }
+	}
 	( tmstate, ctxt )
       }
       case sel : Selection => {

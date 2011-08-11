@@ -310,7 +310,25 @@ public class PrettyPrinter
 
   private static void pp(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.RLLPtrn foo, int _i_)
   {
-    if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft)
+    if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn)
+    {
+       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn _separationptn = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_separationptn.formalexpr_1, 0);
+       render("(x)");
+       pp(_separationptn.formalexpr_2, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn)
+    {
+       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn _duplicationptn = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_duplicationptn.formalexpr_1, 0);
+       render("@");
+       pp(_duplicationptn.formalexpr_2, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft)
     {
        com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft _inclusionleft = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft) foo;
        if (_i_ > 0) render(_L_PAREN);
@@ -347,9 +365,9 @@ public class PrettyPrinter
        render("_");
        if (_i_ > 0) render(_R_PAREN);
     }
-    else     if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit)
+    else     if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn)
     {
-       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit _unit = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit) foo;
+       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn _unitptn = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn) foo;
        if (_i_ > 0) render(_L_PAREN);
        render("*");
        if (_i_ > 0) render(_R_PAREN);
@@ -398,6 +416,13 @@ public class PrettyPrinter
        com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.StringLiteral _stringliteral = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.StringLiteral) foo;
        if (_i_ > 0) render(_L_PAREN);
        printQuoted(_stringliteral.string_);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral)
+    {
+       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral _unitliteral = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       render("*");
        if (_i_ > 0) render(_R_PAREN);
     }
   }
@@ -561,6 +586,24 @@ public class PrettyPrinter
 
   private static void sh(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.RLLPtrn foo)
   {
+    if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn)
+    {
+       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn _separationptn = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn) foo;
+       render("(");
+       render("SeparationPtn");
+       sh(_separationptn.formalexpr_1);
+       sh(_separationptn.formalexpr_2);
+       render(")");
+    }
+    if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn)
+    {
+       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn _duplicationptn = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn) foo;
+       render("(");
+       render("DuplicationPtn");
+       sh(_duplicationptn.formalexpr_1);
+       sh(_duplicationptn.formalexpr_2);
+       render(")");
+    }
     if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft)
     {
        com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft _inclusionleft = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft) foo;
@@ -590,10 +633,10 @@ public class PrettyPrinter
        com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Wildcard _wildcard = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Wildcard) foo;
        render("Wildcard");
     }
-    if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit)
+    if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn)
     {
-       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit _unit = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit) foo;
-       render("Unit");
+       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn _unitptn = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn) foo;
+       render("UnitPtn");
     }
   }
 
@@ -642,6 +685,11 @@ public class PrettyPrinter
        render("StringLiteral");
        sh(_stringliteral.string_);
        render(")");
+    }
+    if (foo instanceof com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral)
+    {
+       com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral _unitliteral = (com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral) foo;
+       render("UnitLiteral");
     }
   }
 

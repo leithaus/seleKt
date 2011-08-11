@@ -112,6 +112,20 @@ public class ComposVisitor<A> implements
     }
 
 /* RLLPtrn */
+    public RLLPtrn visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn p, A arg)
+    {
+      FormalExpr formalexpr_1 = p.formalexpr_1.accept(this, arg);
+      FormalExpr formalexpr_2 = p.formalexpr_2.accept(this, arg);
+
+      return new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn(formalexpr_1, formalexpr_2);
+    }
+    public RLLPtrn visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn p, A arg)
+    {
+      FormalExpr formalexpr_1 = p.formalexpr_1.accept(this, arg);
+      FormalExpr formalexpr_2 = p.formalexpr_2.accept(this, arg);
+
+      return new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn(formalexpr_1, formalexpr_2);
+    }
     public RLLPtrn visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft p, A arg)
     {
       FormalExpr formalexpr_ = p.formalexpr_.accept(this, arg);
@@ -135,10 +149,10 @@ public class ComposVisitor<A> implements
 
       return new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Wildcard();
     }
-    public RLLPtrn visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit p, A arg)
+    public RLLPtrn visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn p, A arg)
     {
 
-      return new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit();
+      return new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn();
     }
 
 /* FormalExpr */
@@ -173,6 +187,11 @@ public class ComposVisitor<A> implements
       String string_ = p.string_;
 
       return new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.StringLiteral(string_);
+    }
+    public ValueExpr visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral p, A arg)
+    {
+
+      return new com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral();
     }
 
 }

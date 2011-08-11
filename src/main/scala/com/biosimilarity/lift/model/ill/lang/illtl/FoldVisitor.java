@@ -96,6 +96,18 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
     }
 
 /* RLLPtrn */
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.formalexpr_1.accept(this, arg), r, arg);
+      r = combine(p.formalexpr_2.accept(this, arg), r, arg);
+      return r;
+    }
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.formalexpr_1.accept(this, arg), r, arg);
+      r = combine(p.formalexpr_2.accept(this, arg), r, arg);
+      return r;
+    }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft p, A arg) {
       R r = leaf(arg);
       r = combine(p.formalexpr_.accept(this, arg), r, arg);
@@ -115,7 +127,7 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
       R r = leaf(arg);
       return r;
     }
-    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit p, A arg) {
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn p, A arg) {
       R r = leaf(arg);
       return r;
     }
@@ -141,6 +153,10 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
       return r;
     }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.StringLiteral p, A arg) {
+      R r = leaf(arg);
+      return r;
+    }
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral p, A arg) {
       R r = leaf(arg);
       return r;
     }

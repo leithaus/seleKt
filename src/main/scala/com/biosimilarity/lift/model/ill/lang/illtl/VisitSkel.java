@@ -139,6 +139,24 @@ public class VisitSkel
   }
   public class RLLPtrnVisitor<R,A> implements RLLPtrn.Visitor<R,A>
   {
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.SeparationPtn p, A arg)
+    {
+      /* Code For SeparationPtn Goes Here */
+
+      p.formalexpr_1.accept(new FormalExprVisitor<R,A>(), arg);
+      p.formalexpr_2.accept(new FormalExprVisitor<R,A>(), arg);
+
+      return null;
+    }
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.DuplicationPtn p, A arg)
+    {
+      /* Code For DuplicationPtn Goes Here */
+
+      p.formalexpr_1.accept(new FormalExprVisitor<R,A>(), arg);
+      p.formalexpr_2.accept(new FormalExprVisitor<R,A>(), arg);
+
+      return null;
+    }
     public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.InclusionLeft p, A arg)
     {
       /* Code For InclusionLeft Goes Here */
@@ -170,9 +188,9 @@ public class VisitSkel
 
       return null;
     }
-    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.Unit p, A arg)
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitPtn p, A arg)
     {
-      /* Code For Unit Goes Here */
+      /* Code For UnitPtn Goes Here */
 
 
       return null;
@@ -222,6 +240,13 @@ public class VisitSkel
       /* Code For StringLiteral Goes Here */
 
       //p.string_;
+
+      return null;
+    }
+    public R visit(com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.UnitLiteral p, A arg)
+    {
+      /* Code For UnitLiteral Goes Here */
+
 
       return null;
     }

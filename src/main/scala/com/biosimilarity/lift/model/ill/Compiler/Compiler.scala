@@ -174,16 +174,47 @@ trait Compiler[Ctxt] {
 	( nstate, ctxt )
       }
       case inl : InjectionLeft => {
-	// TBD
-	( tmstate, ctxt )
+	val ( ilstate, ilctxt ) =
+	  compile( inl.rllexpr_, tmstate, lvars, vctxt, ctxt )
+	val code =
+	  ilstate.code ++ List( new INL( "INL" ) )
+	val nstate =
+	  TMState(
+	    tmstate.stack,
+	    tmstate.env,
+	    code ++ tmstate.code,
+	    tmstate.dump
+	  )
+	( nstate, ctxt )
       }
       case inr : InjectionRight => {
-	// TBD
-	( tmstate, ctxt )
+	val ( irstate, irctxt ) =
+	  compile( inr.rllexpr_, tmstate, lvars, vctxt, ctxt )
+	val code =
+	  irstate.code ++ List( new INL( "INL" ) )
+	val nstate =
+	  TMState(
+	    tmstate.stack,
+	    tmstate.env,
+	    code ++ tmstate.code,
+	    tmstate.dump
+	  )
+	( nstate, ctxt )
       }
       case dur : Duration => {
-	// TBD
-	( tmstate, ctxt )
+	val ( dstate, dctxt ) =
+	  compile( dur.rllexpr_, tmstate, lvars, vctxt, ctxt )
+	val oclcode : List[Instruction] =
+	  ( dstate.code ++ List( new RET( "RET" ) ) );
+	val makeocl = new MAKEOCL( asILLCode( oclcode ) )
+	val nstate =
+	  TMState(
+	    tmstate.stack,
+	    tmstate.env,
+	    makeocl :: tmstate.code,
+	    tmstate.dump
+	  )
+	( nstate, ctxt )
       }
       case dtor : Deconstruction => {
 	// TBD

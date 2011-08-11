@@ -218,15 +218,19 @@ trait Compiler[Ctxt] {
       }
       case dtor : Deconstruction => {
 	dtor.rllptrn_ match {
-	  case u : UnitPtn => {
+	  case unitPtn : UnitPtn => {
 	  }
-	  case incL : InclusionLeft => {
+	  case sepPtn : SeparationPtn => {
 	  }
-	  case incR : InclusionRight => {
+	  case dupPtn : DuplicationPtn => {
 	  }
-	  case extr : Extraction => {
+	  case inclPtn : InclusionLeft => {
 	  }
-	  case wc : Wildcard => {
+	  case incrPtn : InclusionRight => {
+	  }
+	  case extrPtn : Extraction => {
+	  }
+	  case wcPtn : Wildcard => {
 	  }
 	}
 	( tmstate, ctxt )
@@ -257,8 +261,30 @@ trait Compiler[Ctxt] {
 	( nstate, ctxt )
       }
       case vl : SynVal => {
-	// TBD
-	( tmstate, ctxt )
+	vl match {
+	  case ul : UnitLiteral => {
+	    val nstate =
+	      TMState(
+		tmstate.stack,
+		tmstate.env,
+		List( new UNIT( "UNIT" ) ) ++ tmstate.code,
+		tmstate.dump
+	      )
+	    ( nstate, ctxt )
+	  }
+	  case sl : StringLiteral => {
+	    // TBD
+	    ( tmstate, ctxt )
+	  }
+	  case dl : DecimalLiteral => {
+	    // TBD
+	    ( tmstate, ctxt )
+	  }
+	  case il : IntegerLiteral => {
+	    // TBD
+	    ( tmstate, ctxt )
+	  }
+	}	
       }
     }
   }

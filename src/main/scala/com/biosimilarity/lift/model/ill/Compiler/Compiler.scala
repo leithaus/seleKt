@@ -86,390 +86,301 @@ trait Compiler[Ctxt] {
     vctxt : Set[FormalExpr],
     ctxt : Ctxt
   ) : ( TMState, Ctxt ) = {
+    val ( code, nctxt ) =
+      compile( rllExpr, lvars, ctxt )
+    val nstate = 
+      TMState(
+	tmstate.stack,
+	tmstate.env,
+	code ++ tmstate.code,
+	tmstate.dump
+      )
+    ( nstate, nctxt )
+  }
+
+  def compile(
+    rllExpr : RLLExpr,
+    lvars : List[FormalExpr],
+    ctxt : Ctxt
+  ) : ( List[Instruction], Ctxt ) = {
     rllExpr match {
       case ap : Application => {
-	val ( opstate, opctxt ) =
-	  compile( ap.rllexpr_, tmstate, lvars, vctxt, ctxt )
+	val ( opcode, opctxt ) =
+	  compile( ap.rllexpr_, lvars, ctxt )
 	val actlStateNCtxts =
 	  (
 	    for( actl <- ap.listrllexpr_ )
-	    yield { compile( actl, tmstate, lvars, vctxt, ctxt ) }
+	    yield { compile( actl, lvars, ctxt ) }
 	  );
 	val actlCode =
 	  ( List[Instruction]() /: actlStateNCtxts )(
 	    {
 	      ( acc, asc ) => {
-		( acc ++ asc._1.code ++ List( new PUSH( "PUSH" ) ) )
+		( acc ++ asc._1 ++ List( new PUSH( "PUSH" ) ) )
 	      }
 	    }
 	  );
-	val code =
-	  actlCode ++ opstate.code ++ List( new AP( "AP" ) )
-
-	val nstate =
-	  TMState(
-	    tmstate.stack,
-	    tmstate.env,
-	    code ++ tmstate.code,
-	    tmstate.dump
-	  )
-	( nstate, ctxt )
+	val ncode =
+	  actlCode ++ opcode ++ List( new AP( "AP" ) )
+	
+	( ncode, ctxt )
       }
       case sep : Separation => {
-	val ( tstate, tctxt ) = 
+	val ( tcode, tctxt ) = 
 	  compile(
 	    sep.rllexpr_1,
-	    tmstate,
 	    lvars,
-	    vctxt,
 	    ctxt
 	  )
-	val ( ustate, uctxt ) = 
+	val ( ucode, uctxt ) = 
 	  compile(
 	    sep.rllexpr_2,
-	    tmstate,
 	    lvars,
-	    vctxt,
 	    ctxt
 	  )
-	val code = 
+	val ncode = 
 	  (
-	    tstate.code
-	    ++ ustate.code
+	    tcode
+	    ++ ucode
 	    ++ List( new PAIR( "PAIR" ) )
 	  );
-	
-	val nstate =
-	  TMState(
-	    tmstate.stack,
-	    tmstate.env,
-	    code ++ tmstate.code,
-	    tmstate.dump
-	  )
-	( nstate, ctxt )
+		
+	( ncode, ctxt )
       }
       case incl : Inclusion => {
-	// TBD
-	( tmstate, ctxt )
+	val ( tcode, tctxt ) = 
+	  compile(
+	    incl.rllexpr_1,
+	    lvars,
+	    ctxt
+	  )
+	val ( ucode, uctxt ) = 
+	  compile(
+	    incl.rllexpr_2,
+	    lvars,
+	    ctxt
+	  )
+	val makeccl = 
+	  new MAKECCL(
+	    ( tcode ++ List[Instruction]( new RET( "RET" ) ) ),
+	    ( ucode ++ List[Instruction]( new RET( "RET" ) ) )
+	  );
+		
+	( List[Instruction]( makeccl ) , ctxt )
       }
       case abs : Abstraction => {	
-	val ( bstate, bctxt ) =
+	val ( bcode, bctxt ) =
 	  compile(
 	    abs.rllexpr_,
-	    tmstate,
 	    abs.listformalexpr_.toList ++ lvars,
-	    vctxt,
 	    ctxt
 	  )
 	val fclcode : List[Instruction] =
-	  ( bstate.code ++ List( new POP( "POP" ), new RET( "RET" ) ) );
+	  ( bcode ++ List( new POP( "POP" ), new RET( "RET" ) ) );
 	val makefcl = new MAKEFCL( asILLCode( fclcode ) )
-	val nstate =
-	  TMState(
-	    tmstate.stack,
-	    tmstate.env,
-	    makefcl :: tmstate.code,
-	    tmstate.dump
-	  )
-	( nstate, ctxt )
+	
+	( List[Instruction]( makefcl ), ctxt )
       }
       case inl : InjectionLeft => {
-	val ( ilstate, ilctxt ) =
-	  compile( inl.rllexpr_, tmstate, lvars, vctxt, ctxt )
-	val code =
-	  ilstate.code ++ List( new INL( "INL" ) )
-	val nstate =
-	  TMState(
-	    tmstate.stack,
-	    tmstate.env,
-	    code ++ tmstate.code,
-	    tmstate.dump
-	  )
-	( nstate, ctxt )
+	val ( ilcode, ilctxt ) =
+	  compile( inl.rllexpr_, lvars, ctxt )
+	val ncode =
+	  ilcode ++ List( new INL( "INL" ) )
+	
+	( ncode, ctxt )
       }
       case inr : InjectionRight => {
-	val ( irstate, irctxt ) =
-	  compile( inr.rllexpr_, tmstate, lvars, vctxt, ctxt )
-	val code =
-	  irstate.code ++ List( new INL( "INL" ) )
-	val nstate =
-	  TMState(
-	    tmstate.stack,
-	    tmstate.env,
-	    code ++ tmstate.code,
-	    tmstate.dump
-	  )
-	( nstate, ctxt )
+	val ( ircode, irctxt ) =
+	  compile( inr.rllexpr_, lvars, ctxt )
+	val ncode =
+	  ircode ++ List( new INL( "INL" ) )
+	
+	( ncode, ctxt )
       }
       case dur : Duration => {
-	val ( dstate, dctxt ) =
-	  compile( dur.rllexpr_, tmstate, lvars, vctxt, ctxt )
+	val ( dcode, dctxt ) =
+	  compile( dur.rllexpr_, lvars, ctxt )
 	val oclcode : List[Instruction] =
-	  ( dstate.code ++ List( new RET( "RET" ) ) );
+	  ( dcode ++ List( new RET( "RET" ) ) );
 	val makeocl = new MAKEOCL( asILLCode( oclcode ) )
-	val nstate =
-	  TMState(
-	    tmstate.stack,
-	    tmstate.env,
-	    makeocl :: tmstate.code,
-	    tmstate.dump
-	  )
-	( nstate, ctxt )
+	
+	( List[Instruction]( makeocl ), ctxt )
       }
       case dtor : Deconstruction => {
 	dtor.rllptrn_ match {
 	  case unitPtn : UnitPtn => {
-	    val ( tstate, tctxt ) = 
+	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val ( ustate, uctxt ) = 
+	    val ( ucode, uctxt ) = 
 	      compile(
 		dtor.rllexpr_2,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val code = 
+	    val ncode = 
 	      (
-		tstate.code
+		tcode
 		++ List( new UNUNIT( "UNUNIT" ) )
-		++ ustate.code		
+		++ ucode		
 	      );
-	
-	    val nstate =
-	      TMState(
-		tmstate.stack,
-		tmstate.env,
-		code ++ tmstate.code,
-		tmstate.dump
-	      )
-	    ( nstate, ctxt )
+		    
+	    ( ncode, ctxt )
 	  }
 	  case sepPtn : SeparationPtn => {
-	    val ( tstate, tctxt ) = 
+	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val ( ustate, uctxt ) = 
+	    val ( ucode, uctxt ) = 
 	      compile(
 		dtor.rllexpr_2,
-		tmstate,
 		sepPtn.formalexpr_1 :: sepPtn.formalexpr_2 :: lvars,
-		vctxt,
 		ctxt
 	      )
-	    val code = 
+	    val ncode = 
 	      (
-		tstate.code
+		tcode
 		++ List(
 		  new UNPAIR( "UNPAIR" ),
 		  new PUSH( "PUSH" ),
 		  new PUSH( "PUSH" )
 		)
-		++ ustate.code		
+		++ ucode		
 	      );
-	
-	    val nstate =
-	      TMState(
-		tmstate.stack,
-		tmstate.env,
-		code ++ tmstate.code,
-		tmstate.dump
-	      )
-	    ( nstate, ctxt )
+		    
+	    ( ncode, ctxt )
 	  }
 	  case dupPtn : DuplicationPtn => {
-	    val ( tstate, tctxt ) = 
+	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val ( ustate, uctxt ) = 
+	    val ( ucode, uctxt ) = 
 	      compile(
 		dtor.rllexpr_2,
-		tmstate,
 		dupPtn.formalexpr_1 :: dupPtn.formalexpr_2 :: lvars,
-		vctxt,
 		ctxt
 	      )
-	    val code : List[Instruction] = 
+	    val ncode : List[Instruction] = 
 	      (
-		tstate.code
+		tcode
 		++ List[Instruction](
 		  new UNPAIR( "DUP" ),
 		  new PUSH( "PUSH" ),
 		  new PUSH( "PUSH" )
 		)
-		++ ustate.code
+		++ ucode
 		++ List[Instruction](
 		  new POP( "POP" ),
 		  new POP( "POP" )
 		)
 	      );
-	
-	    val nstate =
-	      TMState(
-		tmstate.stack,
-		tmstate.env,
-		code ++ tmstate.code,
-		tmstate.dump
-	      )
-	    ( nstate, ctxt )
+		    
+	    ( ncode, ctxt )
 	  }
 	  case inclPtn : InclusionLeft => {
-	    val ( tstate, tctxt ) = 
+	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val ( ustate, uctxt ) = 
+	    val ( ucode, uctxt ) = 
 	      compile(
 		dtor.rllexpr_2,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val code = 
+	    val ncode = 
 	      (
-		tstate.code
+		tcode
 		++ List[Instruction](
 		  new FST( "FST" ),		  
 		  new PUSH( "PUSH" )
 		)
-		++ ustate.code
+		++ ucode
 		++ List[Instruction]( new POP( "POP" ) )
 	      );
-	
-	    val nstate =
-	      TMState(
-		tmstate.stack,
-		tmstate.env,
-		code ++ tmstate.code,
-		tmstate.dump
-	      )
-	    ( nstate, ctxt )
+		    
+	    ( ncode, ctxt )
 	  }
 	  case incrPtn : InclusionRight => {
-	    val ( tstate, tctxt ) = 
+	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val ( ustate, uctxt ) = 
+	    val ( ucode, uctxt ) = 
 	      compile(
 		dtor.rllexpr_2,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val code = 
+	    val ncode = 
 	      (
-		tstate.code
+		tcode
 		++ List(
 		  new FST( "SND" ),		  
 		  new PUSH( "PUSH" )
 		)
-		++ ustate.code
+		++ ucode
 		++ List( new POP( "POP" ) )
 	      );
-	
-	    val nstate =
-	      TMState(
-		tmstate.stack,
-		tmstate.env,
-		code ++ tmstate.code,
-		tmstate.dump
-	      )
-	    ( nstate, ctxt )
+		    
+	    ( ncode, ctxt )
 	  }
 	  case extrPtn : Extraction => {
-	    val ( tstate, tctxt ) = 
+	    val ( tcode, tctxt ) = 
 	      compile(
 		dtor.rllexpr_1,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val ( ustate, uctxt ) = 
+	    val ( ucode, uctxt ) = 
 	      compile(
 		dtor.rllexpr_2,
-		tmstate,
 		extrPtn.formalexpr_ :: lvars,
-		vctxt,
 		ctxt
 	      )
-	    val code = 
+	    val ncode = 
 	      (
-		tstate.code
+		tcode
 		++ List(
 		  new READ( "READ" ),		  
 		  new PUSH( "PUSH" )
 		)
-		++ ustate.code
+		++ ucode
 		++ List( new POP( "POP" ) )
 	      );
 	
-	    val nstate =
-	      TMState(
-		tmstate.stack,
-		tmstate.env,
-		code ++ tmstate.code,
-		tmstate.dump
-	      )
-	    ( nstate, ctxt )
+	    ( ncode, ctxt )
 	  }
 	  case wcPtn : Wildcard => {	    
-	    val ( ustate, uctxt ) = 
+	    val ( ucode, uctxt ) = 
 	      compile(
 		dtor.rllexpr_2,
-		tmstate,
 		lvars,
-		vctxt,
 		ctxt
 	      )
-	    val code = ustate.code
-	
-	    val nstate =
-	      TMState(
-		tmstate.stack,
-		tmstate.env,
-		code ++ tmstate.code,
-		tmstate.dump
-	      )
-	    ( nstate, ctxt )
+		    
+	    ( ucode , ctxt )
 	  }
 	}
-	( tmstate, ctxt )
       }
       case sel : Selection => {
-	val ( tstate, tctxt ) = 
+	val ( tcode, tctxt ) = 
 	  compile(
 	    sel.rllexpr_1,
-	    tmstate,
 	    lvars,
-	    vctxt,
 	    ctxt
 	  )
 	val leftPtrn =
@@ -486,25 +397,21 @@ trait Compiler[Ctxt] {
 	    }
 	    case _ => throw new Exception( "unexpected right pattern" )
 	  }
-	val ( ustate, uctxt ) = 
+	val ( ucode, uctxt ) = 
 	  compile(
 	    sel.rllexpr_2,
-	    tmstate,
 	    leftPtrn.formalexpr_ :: lvars,
-	    vctxt,
 	    ctxt
 	  )
-	val ( vstate, vktxt ) = 
+	val ( vcode, vktxt ) = 
 	  compile(
 	    sel.rllexpr_3,
-	    tmstate,
 	    rightPtrn.formalexpr_ :: lvars,
-	    vctxt,
 	    ctxt
 	  )
 	val codeL : List[Instruction] =
 	  (
-	    ustate.code 
+	    ucode 
 	    ++ List[Instruction](
 	      new POP( "POP" ),
 	      new RET( "RET" )
@@ -512,28 +419,21 @@ trait Compiler[Ctxt] {
 	  );
 	val codeR : List[Instruction] =
 	  (
-	    vstate.code 
+	    vcode 
 	    ++ List[Instruction](
 	      new POP( "POP" ),
 	      new RET( "RET" )
 	    )
 	  )
-	val code : List[Instruction] = 
+	val ncode : List[Instruction] = 
 	  (
-	    tstate.code
+	    tcode
 	    ++ List[Instruction](
 	      new CASE( asILLCode( codeL ), asILLCode( codeR ) )
 	    )
 	  );
-	
-	val nstate =
-	  TMState(
-	    tmstate.stack,
-	    tmstate.env,
-	    code ++ tmstate.code,
-	    tmstate.dump
-	  )
-	( nstate, ctxt )
+		
+	( ncode, ctxt )
       }
       case mntn : Mention => {	
 	val tls =
@@ -541,44 +441,31 @@ trait Compiler[Ctxt] {
 	    for( i <- 1 to fstOccurs( lvars, mntn.formalexpr_ ) )
 	    yield { new TAIL( "TL" ) }
 	  );
-	val code =
+	val ncode =
 	  (
 	    List( new PUSHENV( "PUSHENV" ) )
 	    ++ tls.toList
 	    ++ List( new HEAD( "HD" ) )
 	  );
-	val nstate =
-	  TMState(
-	    tmstate.stack,
-	    tmstate.env,
-	    code ++ tmstate.code,
-	    tmstate.dump
-	  )
-	( nstate, ctxt )
+	
+	( ncode, ctxt )
       }
       case vl : SynVal => {
 	vl match {
-	  case ul : UnitLiteral => {
-	    val nstate =
-	      TMState(
-		tmstate.stack,
-		tmstate.env,
-		List( new UNIT( "UNIT" ) ) ++ tmstate.code,
-		tmstate.dump
-	      )
-	    ( nstate, ctxt )
+	  case ul : UnitLiteral => {	    
+	    ( List( new UNIT( "UNIT" ) ) , ctxt )
 	  }
 	  case sl : StringLiteral => {
 	    // TBD
-	    ( tmstate, ctxt )
+	    ( Nil, ctxt )
 	  }
 	  case dl : DecimalLiteral => {
 	    // TBD
-	    ( tmstate, ctxt )
+	    ( Nil, ctxt )
 	  }
 	  case il : IntegerLiteral => {
 	    // TBD
-	    ( tmstate, ctxt )
+	    ( Nil, ctxt )
 	  }
 	}	
       }

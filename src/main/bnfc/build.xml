@@ -134,6 +134,17 @@
       <arg value="${bnfc.artifact}.cf" />
     </exec>
   </target>
+  <target name="generate-java-all-cf">
+    <foreach>
+     <fileset dir="${bnfc.dir}" casesensitive="yes">
+       <include name="*.cf"/>
+       <!-- exclude name="**/*Test*"/ -->
+     </fileset>
+     <antcall target="generate-java">
+       <param name="bnfc.artifact" value="${foreach.name}" />
+     </antcall>
+   </foreach>
+  </target>
   <!-- <target name="bnfc-generate-xsd"> -->
 <!--     <mkdir -->
 <!-- 	dir="${target.dir}/generated-schema/${bnfc.stem.dir}/model/${bnfc.artifact}"/> -->

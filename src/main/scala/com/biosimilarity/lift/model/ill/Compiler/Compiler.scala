@@ -13,6 +13,7 @@ import com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn.{ Value => SynVal,_}
 
 trait Compiler[Ctxt] {
   import com.biosimilarity.seleKt.model.ill.vm.illvm.executive.SyntaxConversion._
+  import scala.collection.JavaConversions._
 
   /*
    * The grammar for the ILL TL is not actually context free. This is
@@ -87,8 +88,32 @@ trait Compiler[Ctxt] {
   ) : ( TMState, Ctxt ) = {
     rllExpr match {
       case ap : Application => {
-	// TBD
-	( tmstate, ctxt )
+	val ( opstate, opctxt ) =
+	  compile( ap.rllexpr_, tmstate, lvars, vctxt, ctxt )
+	val actlStateNCtxts =
+	  (
+	    for( actl <- ap.listrllexpr_ )
+	    yield { compile( actl, tmstate, lvars, vctxt, ctxt ) }
+	  );
+	val actlCode =
+	  ( List[Instruction]() /: actlStateNCtxts )(
+	    {
+	      ( acc, asc ) => {
+		( acc ++ asc._1.code ++ List( new PUSH( "PUSH" ) ) )
+	      }
+	    }
+	  );
+	val code =
+	  actlCode ++ opstate.code ++ List( new AP( "AP" ) )
+
+	val nstate =
+	  TMState(
+	    tmstate.stack,
+	    tmstate.env,
+	    code ++ tmstate.code,
+	    tmstate.dump
+	  )
+	( nstate, ctxt )
       }
       case sep : Separation => {
 	val ( tstate, tctxt ) = 
@@ -112,7 +137,7 @@ trait Compiler[Ctxt] {
 	    tstate.code
 	    ++ ustate.code
 	    ++ List( new PAIR( "PAIR" ) )
-	  )
+	  );
 	
 	val nstate =
 	  TMState(
@@ -128,8 +153,25 @@ trait Compiler[Ctxt] {
 	( tmstate, ctxt )
       }
       case abs : Abstraction => {	
-	
-	( tmstate, ctxt )
+	val ( bstate, bctxt ) =
+	  compile(
+	    abs.rllexpr_,
+	    tmstate,
+	    abs.listformalexpr_.toList ++ lvars,
+	    vctxt,
+	    ctxt
+	  )
+	val fclcode : List[Instruction] =
+	  ( bstate.code ++ List( new POP( "POP" ), new RET( "RET" ) ) );
+	val makefcl = new MAKEFCL( asILLCode( fclcode ) )
+	val nstate =
+	  TMState(
+	    tmstate.stack,
+	    tmstate.env,
+	    makefcl :: tmstate.code,
+	    tmstate.dump
+	  )
+	( nstate, ctxt )
       }
       case inl : InjectionLeft => {
 	// TBD

@@ -25,6 +25,41 @@ trait Compiler[Ctxt] {
     vctxt : Set[FormalExpr]
   ) : Boolean
 
+  def fstOccurs(
+    lvars : List[FormalExpr],
+    fml : FormalExpr
+  ) : Int = {
+    fml match {
+      case t : Transcription => {
+	lvars.indexWhere(
+	  ( lfml : FormalExpr ) => {
+	    lfml match {
+	      case lt : Transcription => {
+		lt.rllexpr_.equals( t.rllexpr_ )
+	      }
+	      case _ => false
+	    }
+	  }
+	)
+      }
+      case a : AtomLiteral => {
+	lvars.indexWhere(
+	  ( lfml : FormalExpr ) => {
+	    lfml match {
+	      case la : AtomLiteral => {
+		la.ident_.equals( a.ident_ )
+	      }
+	      case _ => false
+	    }
+	  }
+	)
+      }
+      case _ => {
+	throw new Exception( "Unexpected fml identifier type" )
+      }
+    }    
+  }
+
   def compile(
     rllExpr : RLLExpr,
     machine : MACHINE,
@@ -32,50 +67,114 @@ trait Compiler[Ctxt] {
     vctxt : Set[FormalExpr],
     ctxt : Ctxt
   ) : ( MACHINE, Ctxt ) = {
+    val ( tmstate, fctxt ) = 
+      compile(
+	rllExpr,
+	asTMState( machine ),
+	lvars,
+	vctxt,
+	ctxt
+      )
+    ( asMachine( tmstate ), fctxt )
+  }
+
+  def compile(
+    rllExpr : RLLExpr,
+    tmstate : TMState,
+    lvars : List[FormalExpr],
+    vctxt : Set[FormalExpr],
+    ctxt : Ctxt
+  ) : ( TMState, Ctxt ) = {
     rllExpr match {
       case ap : Application => {
 	// TBD
-	( machine, ctxt )
+	( tmstate, ctxt )
       }
       case sep : Separation => {
-	// TBD
-	( machine, ctxt )
+	val ( tstate, tctxt ) = 
+	  compile(
+	    sep.rllexpr_1,
+	    tmstate,
+	    lvars,
+	    vctxt,
+	    ctxt
+	  )
+	val ( ustate, uctxt ) = 
+	  compile(
+	    sep.rllexpr_2,
+	    tmstate,
+	    lvars,
+	    vctxt,
+	    ctxt
+	  )
+	val code = 
+	  (
+	    tstate.code
+	    ++ ustate.code
+	    ++ List( new PAIR( "PAIR" ) )
+	  )
+	
+	val nstate =
+	  TMState(
+	    tmstate.stack,
+	    tmstate.env,
+	    code ++ tmstate.code,
+	    tmstate.dump
+	  )
+	( nstate, ctxt )
       }
       case incl : Inclusion => {
 	// TBD
-	( machine, ctxt )
+	( tmstate, ctxt )
       }
       case abs : Abstraction => {	
-	// TBD
-	( machine, ctxt )
+	
+	( tmstate, ctxt )
       }
       case inl : InjectionLeft => {
 	// TBD
-	( machine, ctxt )
+	( tmstate, ctxt )
       }
       case inr : InjectionRight => {
 	// TBD
-	( machine, ctxt )
+	( tmstate, ctxt )
       }
       case dur : Duration => {
 	// TBD
-	( machine, ctxt )
+	( tmstate, ctxt )
       }
       case dtor : Deconstruction => {
 	// TBD
-	( machine, ctxt )
+	( tmstate, ctxt )
       }
       case sel : Selection => {
 	// TBD
-	( machine, ctxt )
+	( tmstate, ctxt )
       }
-      case mntn : Mention => {
-	// TBD
-	( machine, ctxt )
+      case mntn : Mention => {	
+	val tls =
+	  (
+	    for( i <- 1 to fstOccurs( lvars, mntn.formalexpr_ ) )
+	    yield { new TAIL( "TL" ) }
+	  );
+	val code =
+	  (
+	    List( new PUSHENV( "PUSHENV" ) )
+	    ++ tls.toList
+	    ++ List( new HEAD( "HD" ) )
+	  );
+	val nstate =
+	  TMState(
+	    tmstate.stack,
+	    tmstate.env,
+	    code ++ tmstate.code,
+	    tmstate.dump
+	  )
+	( nstate, ctxt )
       }
       case vl : SynVal => {
 	// TBD
-	( machine, ctxt )
+	( tmstate, ctxt )
       }
     }
   }

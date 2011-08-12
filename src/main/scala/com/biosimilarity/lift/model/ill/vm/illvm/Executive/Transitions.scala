@@ -630,3 +630,30 @@ trait Transitions[Ctxt] {
 
 object NoCtxtTransitions extends Transitions[Unit] {
 }
+
+object TraceTransitions extends Transitions[ReadBack] {
+  import SyntaxConversion._
+  override def reduce(
+    tmstate : TMState,
+    ctxt : ReadBack
+  ) : ( Value, ReadBack ) = {
+    var vmstate = tmstate
+    var ktxt = ctxt 
+
+    while( !( vmstate.code.isEmpty ) ) {
+      println( ctxt.prettyPrint( vmstate )( 0 ) )
+      println( " ==========> " )
+      reduceOnce( vmstate, ctxt ) match {
+	case ( r1state, nCtxt ) => {
+	  vmstate = r1state
+	  ktxt = nCtxt
+	}
+      }
+    }
+
+    vmstate.stack match {
+      case Right( v ) :: stkRest => ( v, ktxt )
+      case _ => throw new Exception( "execution failed to produce a value" )
+    }
+  }
+}

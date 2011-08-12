@@ -121,6 +121,9 @@ trait ReadBack /*[Ctxt]*/ {
   }
   def prettyPrint( v : Value )( level : Int ) : String = {
     v match {
+      case unit : UnitV => {
+	"*"
+      }
       case ocl : OclV => {
 	"ocl(" + "#<code>" + "," + "#<env>" + ")"
       }

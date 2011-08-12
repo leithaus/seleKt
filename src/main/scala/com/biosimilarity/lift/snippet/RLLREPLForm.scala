@@ -12,12 +12,12 @@ import js.{JE, JsCmd, JsCmds}
 import JsCmds._
 import JE._
 
-import com.biosimilarity.lift.model.REPL
+import com.biosimilarity.lift.model.RLLREPL
 
 import scala.xml._
 
 class RLLREPLForm {
-  val theREPL = new REPL()
+  val theREPL = new RLLREPL()
   var theTerm : String = "*"
   var theClientRequestStr : String = evalStr()
 
@@ -35,7 +35,7 @@ class RLLREPLForm {
 	  }
 	  case JsonCmd( "evaluate", _, paramStr :  String, _ ) => {
 	    Text(
-	      ("evaluate " + "TBD") )
+	      ("evaluate " + theREPL.eval(paramStr)) )
 	  }
 	  case JsonCmd( "type", _, paramStr :  String, _ ) => {
 	    Text(

@@ -487,7 +487,7 @@ trait Compiler[Ctxt] {
 	( ncode, ctxt )
       }
       case vl : SynVal => {
-	vl match {
+	vl.valueexpr_ match {
 	  // * (*) l = [UNIT] 
 	  case ul : UnitLiteral => {	    
 	    ( List( new UNIT( "UNIT" ) ) , ctxt )

@@ -495,6 +495,9 @@
                 <ant antfile="${basedir}/src/main/bnfc/build.xml">
                   <target name="bnfc-generate"/>
                 </ant>
+		<ant antfile="${basedir}/src/main/bnfc/build.xml">
+                  <target name="generate-java"/>
+                </ant>
               </tasks>
             </configuration>
             <goals>

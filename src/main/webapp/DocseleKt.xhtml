@@ -27,27 +27,31 @@ reserved words excluded.
 Integer literals <i>Integer</i> are nonempty sequences of digits.
 </p>
 <p>
+String literals <i>String</i> have the form
+<code>"</code><i>x</i><code>"</code>}, where <i>x</i> is any sequence of any characters
+except <code>"</code> unless preceded by <code>\</code>.
+</p>
+<p>
 Double-precision float literals <i>Double</i> have the structure
 indicated by the regular expression <code>digit+ '.' digit+ ('e' ('-')? digit+)?</code> i.e.\
 two sequences of digits separated by a decimal point, optionally
 followed by an unsigned or negative exponent.
 </p>
 <p>
-String literals <i>String</i> have the form
-<code>"</code><i>x</i><code>"</code>}, where <i>x</i> is any sequence of any characters
-except <code>"</code> unless preceded by <code>\</code>.
-</p>
-<p>
-Character literals <i>Char</i> have the form
-<code>'</code><i>c</i><code>'</code>, where <i>c</i> is any single character.
-</p>
-<p>
 UIdent literals are recognized by the regular expression
 <code>`</code>upper (letter | digit | '_')*<code>`</code>
 </p>
 <p>
+LIdent literals are recognized by the regular expression
+<code>`</code>lower (letter | digit | '_')*<code>`</code>
+</p>
+<p>
 Wild literals are recognized by the regular expression
-<code>`</code>'_'<code>`</code>
+<code>`</code>'_' char*<code>`</code>
+</p>
+<p>
+UUID literals are recognized by the regular expression
+<code>`</code>["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] '-' ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] '-' ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] '-' ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] '-' ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] '-' ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"] ["ABCDEF0123456789"]<code>`</code>
 </p>
 <h3>Reserved words and symbols</h3>
 <p>
@@ -58,26 +62,44 @@ The reserved words used in seleKt are the following:
 </p>
 <table align="center" cellpadding="4">
 <tr>
-<td><code>Nil</code></td>
+<td><code>None</code></td>
+<td><code>acknowledge</code></td>
+<td><code>answer</code></td>
+<td><code>ask</code></td>
+</tr>
+<tr>
+<td><code>body</code></td>
 <td><code>false</code></td>
-<td><code>in</code></td>
-<td><code>lambda</code></td>
+<td><code>fetchRequest</code></td>
+<td><code>fetchResponse</code></td>
 </tr>
 <tr>
-<td><code>let</code></td>
-<td><code>newPrompt</code></td>
+<td><code>getRequest</code></td>
+<td><code>getResponse</code></td>
+<td><code>headers</code></td>
+<td><code>notok</code></td>
+</tr>
+<tr>
 <td><code>null</code></td>
-<td><code>pushPrompt</code></td>
+<td><code>ok</code></td>
+<td><code>publishRequest</code></td>
+<td><code>publishResponse</code></td>
 </tr>
 <tr>
-<td><code>pushSubCont</code></td>
-<td><code>record</code></td>
-<td><code>store</code></td>
+<td><code>putRequest</code></td>
+<td><code>putResponse</code></td>
+<td><code>request</code></td>
+<td><code>response</code></td>
+</tr>
+<tr>
+<td><code>storeRequest</code></td>
+<td><code>storeResponse</code></td>
+<td><code>subscribeRequest</code></td>
+<td><code>subscribeResponse</code></td>
+</tr>
+<tr>
+<td><code>tell</code></td>
 <td><code>true</code></td>
-</tr>
-<tr>
-<td><code>wire</code></td>
-<td><code>withSubCont</code></td>
 <td></td>
 </tr>
 </table>
@@ -87,57 +109,27 @@ The symbols used in seleKt are the following:
 </p>
 <table align="center" cellpadding="4">
 <tr>
-<td>&amp;</td>
-<td>|</td>
-<td>::</td>
-<td>(</td>
-</tr>
-<tr>
-<td>)</td>
-<td>=</td>
-<td>{:</td>
-<td>:</td>
-</tr>
-<tr>
-<td>:}</td>
-<td>_</td>
 <td>{</td>
+<td>,</td>
 <td>}</td>
+<td>"</td>
 </tr>
 <tr>
-<td>&lt;-</td>
-<td colspan="2">? |</td>
-<td>| ~</td>
-</tr>
-<tr>
-<td>&lt;</td>
-<td>&gt;</td>
-<td>;</td>
-<td>.</td>
-</tr>
-<tr>
-<td>@</td>
-<td>+</td>
-<td>*</td>
-<td>-</td>
-</tr>
-<tr>
-<td>!</td>
+<td>:</td>
 <td>[</td>
 <td>]</td>
-<td>==</td>
+<td>$</td>
 </tr>
 <tr>
-<td>&lt;=</td>
-<td>&gt;=</td>
 <td>/</td>
-<td>,</td>
+<td>.</td>
+<td></td>
 </tr>
 </table>
 
 <h3>Comments</h3>
 <p>
-Single-line comments begin with //.Multiple-line comments are  enclosed with /* and */.
+There are no single-line comments in the grammar.There are no multiple-line comments in the grammar.
 </p>
 <h2>The syntactic structure of seleKt</h2>
 <p>
@@ -148,579 +140,184 @@ All other symbols are terminals.
 </p>
 <table align="center" cellpadding="4">
 <tr>
-<td><i>RecordExpr</i></td>
+<td><i>Message</i></td>
 <td>-&gt;</td>
-<td><i>RecordExpr</i> <code>&amp;</code> <i>RecordExpr1</i></td>
+<td><code>{</code> <i>LblReqHeader</i> <code>,</code> <i>LblReqBody</i> <code>}</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>RecordExpr1</i> <code>|</code> <i>RecordExpr2</i></td>
+<td><code>{</code> <i>LblReqBody</i> <code>,</code> <i>LblReqHeader</i> <code>}</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>RecordExpr1</i></td>
+<td><code>{</code> <i>LblRspHeader</i> <code>,</code> <i>LblRspBody</i> <code>}</code></td>
 </tr>
 <tr>
-<td><i>RecordExpr2</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><code>{</code> <i>LblRspBody</i> <code>,</code> <i>LblRspHeader</i> <code>}</code></td>
+</tr>
+<tr>
+<td><i>LblReqHeader</i></td>
 <td>-&gt;</td>
-<td><i>DomainExpr</i> <code>::</code> <i>RecordExpr3</i></td>
+<td><code>"</code> <code>headers</code> <code>"</code> <code>:</code> <i>ReqHeader</i></td>
 </tr>
 <tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RecordExpr3</i></td>
-</tr>
-<tr>
-<td><i>RecordExpr3</i></td>
+<td><i>LblRspHeader</i></td>
 <td>-&gt;</td>
-<td><code>let</code> <i>[Binding]</i> <code>in</code> <i>RecordExpr3</i></td>
+<td><code>"</code> <code>headers</code> <code>"</code> <code>:</code> <i>RspHeader</i></td>
 </tr>
 <tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RecordVariable</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>record</code> <i>CollectionExpr</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>Nil</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>(</code> <i>RecordExpr</i> <code>)</code></td>
-</tr>
-<tr>
-<td><i>RecordExpr1</i></td>
+<td><i>LblReqBody</i></td>
 <td>-&gt;</td>
-<td><i>RecordExpr2</i></td>
+<td><code>"</code> <code>body</code> <code>"</code> <code>:</code> <i>KVDBRequest</i></td>
 </tr>
 <tr>
-<td><i>Binding</i></td>
+<td><i>LblRspBody</i></td>
 <td>-&gt;</td>
-<td><i>RecordPtn</i> <code>=</code> <i>RecordPtn</i></td>
+<td><code>"</code> <code>body</code> <code>"</code> <code>:</code> <i>KVDBResponse</i></td>
 </tr>
 <tr>
-<td><i>RecordPtn</i></td>
+<td><i>ReqHeader</i></td>
 <td>-&gt;</td>
-<td><code>{:</code> <i>[DomainPtn]</i> <code>:</code> <i>RecordPtn</i> <code>:}</code></td>
+<td><code>[</code> <i>URI</i> <code>,</code> <i>URI</i> <code>,</code> <i>UUID</i> <code>,</code> <i>UUID</i> <code>,</code> <i>ReqJust</i> <code>]</code></td>
 </tr>
 <tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RecordExpr</i></td>
-</tr>
-<tr>
-<td><i>RecordVariable</i></td>
+<td><i>RspHeader</i></td>
 <td>-&gt;</td>
-<td><i>UIdent</i></td>
+<td><code>[</code> <i>URI</i> <code>,</code> <i>URI</i> <code>,</code> <i>UUID</i> <code>,</code> <i>UUID</i> <code>,</code> <i>RspJust</i> <code>]</code></td>
 </tr>
 <tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>_</code></td>
-</tr>
-<tr>
-<td><i>CollectionExpr</i></td>
+<td><i>KVDBRequest</i></td>
 <td>-&gt;</td>
-<td><i>ExtensionBodyExpr</i></td>
+<td><code>{</code> <code>"</code> <i>AskReq</i> <code>"</code> <code>:</code> <i>AskReqPacket</i> <code>}</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>IntensionBodyExpr</i></td>
+<td><code>{</code> <code>"</code> <i>TellReq</i> <code>"</code> <code>:</code> <i>TellReqPacket</i> <code>}</code></td>
 </tr>
 <tr>
-<td><i>ExtensionBodyExpr</i></td>
+<td><i>KVDBResponse</i></td>
 <td>-&gt;</td>
-<td><code>{</code> <i>[DomainExpr]</i> <code>}</code></td>
+<td><code>{</code> <code>"</code> <i>AskRsp</i> <code>"</code> <code>:</code> <i>AskRspPacket</i> <code>}</code></td>
 </tr>
 <tr>
-<td><i>IntensionBodyExpr</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><code>{</code> <code>"</code> <i>TellRsp</i> <code>"</code> <code>:</code> <i>TellRspPacket</i> <code>}</code></td>
+</tr>
+<tr>
+<td><i>AskReqPacket</i></td>
 <td>-&gt;</td>
-<td><code>{</code> <i>DomainPtn</i> <code>|</code> <i>[DomainDeclOrCond]</i> <code>}</code></td>
+<td><code>{</code> <code>"</code> <code>ask</code> <code>"</code> <code>:</code> <i>Pattern</i> <code>}</code></td>
 </tr>
 <tr>
-<td><i>DomainDeclOrCond</i></td>
+<td><i>AskRspPacket</i></td>
 <td>-&gt;</td>
-<td><i>DomainCond</i></td>
+<td><code>{</code> <code>"</code> <code>answer</code> <code>"</code> <code>:</code> <code>[</code> <i>Pattern</i> <code>,</code> <i>Substitution</i> <code>,</code> <i>Blob</i> <code>]</code> <code>}</code></td>
 </tr>
 <tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>DomainGen</i></td>
-</tr>
-<tr>
-<td><i>DomainGen</i></td>
+<td><i>TellReqPacket</i></td>
 <td>-&gt;</td>
-<td><i>DomainPtn</i> <code>&lt;-</code> <i>RecordSource</i></td>
+<td><code>{</code> <code>"</code> <code>tell</code> <code>"</code> <code>:</code> <code>[</code> <i>Pattern</i> <code>,</code> <i>Blob</i> <code>]</code> <code>}</code></td>
 </tr>
 <tr>
-<td><i>DomainCond</i></td>
+<td><i>TellRspPacket</i></td>
 <td>-&gt;</td>
-<td><i>DomainPtn</i> <code>in</code> <i>DomainCondition</i></td>
+<td><code>{</code> <code>"</code> <code>acknowledge</code> <code>"</code> <code>:</code> <i>Status</i> <code>}</code></td>
 </tr>
 <tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueExpr</i> <i>Comparison</i> <i>ValueExpr</i></td>
-</tr>
-<tr>
-<td><i>DomainPtn</i></td>
+<td><i>ReqJust</i></td>
 <td>-&gt;</td>
-<td><code>?</code> <i>RLambdaPCtxt</i></td>
+<td><code>None</code></td>
 </tr>
 <tr>
-<td><i>DomainExpr</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><code>{</code> <code>"</code> <code>response</code> <code>"</code> <code>:</code> <i>UUID</i> <code>}</code></td>
+</tr>
+<tr>
+<td><i>RspJust</i></td>
 <td>-&gt;</td>
-<td><i>RLambdaExpr</i></td>
+<td><code>None</code></td>
 </tr>
 <tr>
-<td><i>RecordSource</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><code>{</code> <code>"</code> <code>request</code> <code>"</code> <code>:</code> <i>UUID</i> <code>}</code></td>
+</tr>
+<tr>
+<td><i>AskReq</i></td>
 <td>-&gt;</td>
-<td><i>RecordExpr</i></td>
+<td><code>getRequest</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><code>store</code> <i>StoreURL</i></td>
+<td><code>fetchRequest</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><code>wire</code> <i>WireURL</i></td>
+<td><code>subscribeRequest</code></td>
 </tr>
 <tr>
-<td><i>DomainCondition</i></td>
+<td><i>TellReq</i></td>
 <td>-&gt;</td>
-<td><i>DomainCondition</i> <code>||</code> <i>DomainCondition1</i></td>
+<td><code>putRequest</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>DomainCondition1</i></td>
+<td><code>storeRequest</code></td>
 </tr>
 <tr>
-<td><i>DomainCondition1</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><code>publishRequest</code></td>
+</tr>
+<tr>
+<td><i>AskRsp</i></td>
 <td>-&gt;</td>
-<td><i>DomainCondition1</i> <code>&amp;</code> <i>DomainCondition2</i></td>
+<td><code>getResponse</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>DomainCondition2</i></td>
+<td><code>fetchResponse</code></td>
 </tr>
 <tr>
-<td><i>DomainCondition2</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><code>subscribeResponse</code></td>
+</tr>
+<tr>
+<td><i>TellRsp</i></td>
 <td>-&gt;</td>
-<td><code>~</code> <i>DomainCondition2</i></td>
+<td><code>putResponse</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><code>(</code> <i>DomainCondition</i> <code>)</code></td>
+<td><code>storeResponse</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><code>?</code> <i>RLambdaLCtxt</i></td>
+<td><code>publishResponse</code></td>
 </tr>
 <tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>Modality</i> <i>DomainCondition2</i></td>
-</tr>
-<tr>
-<td><i>Modality</i></td>
+<td><i>Status</i></td>
 <td>-&gt;</td>
-<td><code>&lt;</code> <i>DomainCondition2</i> <code>&gt;</code></td>
-</tr>
-<tr>
-<td><i>RLambdaPCtxt</i></td>
-<td>-&gt;</td>
-<td><i>RLambdaPCtxt</i> <i>[RLambdaPCtxt1]</i> <code>;</code></td>
+<td><code>ok</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>RLambdaPCtxt1</i></td>
-</tr>
-<tr>
-<td><i>RLambdaPCtxt1</i></td>
-<td>-&gt;</td>
-<td><code>lambda</code> <i>[FormalPCtxt]</i> <code>.</code> <i>RLambdaPCtxt2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RLambdaPCtxt2</i></td>
-</tr>
-<tr>
-<td><i>RLambdaPCtxt2</i></td>
-<td>-&gt;</td>
-<td><i>ContinuePCtxt</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValuePCtxt</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>FormalPCtxt</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>(</code> <i>RLambdaPCtxt</i> <code>)</code></td>
-</tr>
-<tr>
-<td><i>ContinuePCtxt</i></td>
-<td>-&gt;</td>
-<td><code>pushPrompt</code> <i>RLambdaPCtxt2</i> <i>RLambdaPCtxt2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>withSubCont</code> <i>RLambdaPCtxt2</i> <i>RLambdaPCtxt2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>pushSubCont</code> <i>RLambdaPCtxt2</i> <i>RLambdaPCtxt2</i></td>
-</tr>
-<tr>
-<td><i>FormalPCtxt</i></td>
-<td>-&gt;</td>
-<td><code>@</code> <code>&lt;</code> <i>RLambdaPCtxt2</i> <code>&gt;</code></td>
-</tr>
-<tr>
-<td><i>ValuePCtxt</i></td>
-<td>-&gt;</td>
-<td><i>ValuePCtxt</i> <code>+</code> <i>ValuePCtxt1</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValuePCtxt1</i></td>
-</tr>
-<tr>
-<td><i>ValuePCtxt1</i></td>
-<td>-&gt;</td>
-<td><i>ValuePCtxt1</i> <code>*</code> <i>ValuePCtxt2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValuePCtxt2</i></td>
-</tr>
-<tr>
-<td><i>ValuePCtxt2</i></td>
-<td>-&gt;</td>
-<td><code>-</code> <i>ValuePCtxt3</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValuePCtxt3</i></td>
-</tr>
-<tr>
-<td><i>ValuePCtxt3</i></td>
-<td>-&gt;</td>
-<td><code>!</code> <i>ValueLiteral</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValuePCtxtHole</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>[</code> <i>ValuePCtxt</i> <code>]</code></td>
-</tr>
-<tr>
-<td><i>RLambdaLCtxt</i></td>
-<td>-&gt;</td>
-<td><i>RLambdaLCtxt</i> <i>[RLambdaLCtxt1]</i> <code>;</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RLambdaLCtxt1</i></td>
-</tr>
-<tr>
-<td><i>RLambdaLCtxt1</i></td>
-<td>-&gt;</td>
-<td><code>lambda</code> <i>[FormalLCtxt]</i> <code>.</code> <i>RLambdaLCtxt2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RLambdaLCtxt2</i></td>
-</tr>
-<tr>
-<td><i>RLambdaLCtxt2</i></td>
-<td>-&gt;</td>
-<td><i>ContinueLCtxt</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>FormalLCtxt</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueLCtxt</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>(</code> <i>RLambdaLCtxt</i> <code>)</code></td>
-</tr>
-<tr>
-<td><i>ContinueLCtxt</i></td>
-<td>-&gt;</td>
-<td><code>pushPrompt</code> <i>RLambdaLCtxt2</i> <i>RLambdaLCtxt2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>withSubCont</code> <i>RLambdaLCtxt2</i> <i>RLambdaLCtxt2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>pushSubCont</code> <i>RLambdaLCtxt2</i> <i>RLambdaLCtxt2</i></td>
-</tr>
-<tr>
-<td><i>FormalLCtxt</i></td>
-<td>-&gt;</td>
-<td><code>@</code> <code>&lt;</code> <i>RLambdaLCtxt2</i> <code>&gt;</code></td>
-</tr>
-<tr>
-<td><i>ValueLCtxt</i></td>
-<td>-&gt;</td>
-<td><i>ValueLCtxt</i> <code>+</code> <i>ValueLCtxt1</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueLCtxt1</i></td>
-</tr>
-<tr>
-<td><i>ValueLCtxt1</i></td>
-<td>-&gt;</td>
-<td><i>ValueLCtxt1</i> <code>*</code> <i>ValueLCtxt2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueLCtxt2</i></td>
-</tr>
-<tr>
-<td><i>ValueLCtxt2</i></td>
-<td>-&gt;</td>
-<td><code>-</code> <i>ValueLCtxt3</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueLCtxt3</i></td>
-</tr>
-<tr>
-<td><i>ValueLCtxt3</i></td>
-<td>-&gt;</td>
-<td><code>!</code> <i>ValueLiteral</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueLCtxtHole</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>[</code> <i>ValueLCtxt</i> <code>]</code></td>
-</tr>
-<tr>
-<td><i>ValuePCtxtHole</i></td>
-<td>-&gt;</td>
-<td><i>UIdent</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>Wild</i></td>
-</tr>
-<tr>
-<td><i>ValueLCtxtHole</i></td>
-<td>-&gt;</td>
-<td><i>LogicalGround</i></td>
-</tr>
-<tr>
-<td><i>LogicalGround</i></td>
-<td>-&gt;</td>
-<td><code>true</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>false</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>null</code></td>
-</tr>
-<tr>
-<td><i>Comparison</i></td>
-<td>-&gt;</td>
-<td><code>==</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>&lt;</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>&gt;</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>&lt;=</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>&gt;=</code></td>
-</tr>
-<tr>
-<td><i>RLambdaExpr</i></td>
-<td>-&gt;</td>
-<td><i>RLambdaExpr</i> <i>[RLambdaExpr1]</i> <code>;</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RLambdaExpr1</i></td>
-</tr>
-<tr>
-<td><i>RLambdaExpr1</i></td>
-<td>-&gt;</td>
-<td><code>lambda</code> <i>[FormalExpr]</i> <code>.</code> <i>RLambdaExpr2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ContinueExpr</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RLambdaExpr2</i></td>
-</tr>
-<tr>
-<td><i>RLambdaExpr2</i></td>
-<td>-&gt;</td>
-<td><i>FormalExpr</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueExpr</i></td>
-</tr>
-<tr>
-<td><i>ContinueExpr</i></td>
-<td>-&gt;</td>
-<td><code>newPrompt</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>pushPrompt</code> <i>RLambdaExpr2</i> <i>RLambdaExpr2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>withSubCont</code> <i>RLambdaExpr2</i> <i>RLambdaExpr2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>pushSubCont</code> <i>RLambdaExpr2</i> <i>RLambdaExpr2</i></td>
-</tr>
-<tr>
-<td><i>FormalExpr</i></td>
-<td>-&gt;</td>
-<td><code>@</code> <code>&lt;</code> <i>RLambdaExpr2</i> <code>&gt;</code></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>Ident</i></td>
-</tr>
-<tr>
-<td><i>ValueExpr</i></td>
-<td>-&gt;</td>
-<td><i>ValueExpr</i> <code>+</code> <i>ValueExpr1</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueExpr1</i></td>
-</tr>
-<tr>
-<td><i>ValueExpr1</i></td>
-<td>-&gt;</td>
-<td><i>ValueExpr1</i> <code>*</code> <i>ValueExpr2</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueExpr2</i></td>
-</tr>
-<tr>
-<td><i>ValueExpr2</i></td>
-<td>-&gt;</td>
-<td><code>-</code> <i>ValueExpr3</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>ValueExpr3</i></td>
-</tr>
-<tr>
-<td><i>ValueExpr3</i></td>
-<td>-&gt;</td>
-<td><i>ValueLiteral</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>[</code> <i>ValueExpr</i> <code>]</code></td>
-</tr>
-<tr>
-<td><i>ValueLiteral</i></td>
-<td>-&gt;</td>
-<td><code>!</code> <i>RecordExpr3</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><code>(</code> <i>RLambdaExpr</i> <code>)</code></td>
+<td><code>notok</code></td>
 </tr>
 <tr>
 <td></td>
@@ -730,50 +327,120 @@ All other symbols are terminals.
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>Double</i></td>
+<td><i>String</i></td>
+</tr>
+<tr>
+<td><i>Pattern</i></td>
+<td>-&gt;</td>
+<td><i>QryTerm</i></td>
+</tr>
+<tr>
+<td><i>Blob</i></td>
+<td>-&gt;</td>
+<td><i>String</i></td>
+</tr>
+<tr>
+<td><i>Substitution</i></td>
+<td>-&gt;</td>
+<td><code>{</code> <i>[SubstPair]</i> <code>}</code></td>
+</tr>
+<tr>
+<td><i>SubstPair</i></td>
+<td>-&gt;</td>
+<td><code>"</code> <code>$</code> <i>UIdent</i> <code>"</code> <code>:</code> <i>QryTerm</i></td>
+</tr>
+<tr>
+<td><i>QryTerm</i></td>
+<td>-&gt;</td>
+<td><code>{</code> <i>String</i> <code>:</code> <i>[QryElem]</i> <code>}</code></td>
+</tr>
+<tr>
+<td><i>QryElem</i></td>
+<td>-&gt;</td>
+<td><code>"</code> <code>$</code> <i>UIdent</i> <code>"</code></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
+<td><i>QryValue</i></td>
+</tr>
+<tr>
+<td><i>QryValue</i></td>
+<td>-&gt;</td>
+<td><i>QryGrndLit</i></td>
+</tr>
+<tr>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><i>QryArray</i></td>
+</tr>
+<tr>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><i>QryTerm</i></td>
+</tr>
+<tr>
+<td><i>QryArray</i></td>
+<td>-&gt;</td>
+<td><code>[</code> <i>[QryValue]</i> <code>]</code></td>
+</tr>
+<tr>
+<td><i>QryGrndLit</i></td>
+<td>-&gt;</td>
 <td><i>String</i></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>Char</i></td>
+<td><i>QryNum</i></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>URL</i></td>
+<td><i>QryBool</i></td>
 </tr>
 <tr>
-<td><i>StoreURL</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><code>null</code></td>
+</tr>
+<tr>
+<td><i>QryBool</i></td>
 <td>-&gt;</td>
-<td><i>URL</i></td>
+<td><code>true</code></td>
 </tr>
 <tr>
-<td><i>WireURL</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><i>QryNum</i></td>
 <td>-&gt;</td>
-<td><i>URL</i></td>
+<td><i>Integer</i></td>
 </tr>
 <tr>
-<td><i>URL</i></td>
+<td></td>
+<td align="center"><b>|</b></td>
+<td><i>Double</i></td>
+</tr>
+<tr>
+<td><i>URI</i></td>
 <td>-&gt;</td>
-<td><code>&lt;</code> <i>URLScheme</i> <code>:</code> <i>URLPath</i> <code>&gt;</code></td>
+<td><i>URIScheme</i> <code>:</code> <i>URIPath</i></td>
 </tr>
 <tr>
-<td><i>URLPath</i></td>
+<td><i>URIPath</i></td>
 <td>-&gt;</td>
-<td><code>/</code> <i>URLLocation</i> <i>URLRelativePath</i></td>
+<td><code>/</code> <i>URILocation</i> <i>URIRelativePath</i></td>
 </tr>
 <tr>
-<td><i>URLLocation</i></td>
+<td><i>URILocation</i></td>
 <td>-&gt;</td>
-<td><i>URLRoot</i> <i>URLRsrcLocation</i></td>
+<td><i>URIRoot</i> <i>URIRsrcLocation</i></td>
 </tr>
 <tr>
-<td><i>URLRsrcLocation</i></td>
+<td><i>URIRsrcLocation</i></td>
 <td>-&gt;</td>
 <td><i>NetLocation</i> <code>:</code> <i>Port</i></td>
 </tr>
@@ -783,12 +450,12 @@ All other symbols are terminals.
 <td><i>NetLocation</i></td>
 </tr>
 <tr>
-<td><i>URLRelativePath</i></td>
+<td><i>URIRelativePath</i></td>
 <td>-&gt;</td>
-<td><i>URLRoot</i> <i>[URLPathElement]</i></td>
+<td><i>URIRoot</i> <i>[URIPathElement]</i></td>
 </tr>
 <tr>
-<td><i>URLRoot</i></td>
+<td><i>URIRoot</i></td>
 <td>-&gt;</td>
 <td><code>/</code></td>
 </tr>
@@ -798,12 +465,12 @@ All other symbols are terminals.
 <td><i>[DNSElement]</i></td>
 </tr>
 <tr>
-<td><i>URLScheme</i></td>
+<td><i>URIScheme</i></td>
 <td>-&gt;</td>
 <td><i>Ident</i></td>
 </tr>
 <tr>
-<td><i>URLPathElement</i></td>
+<td><i>URIPathElement</i></td>
 <td>-&gt;</td>
 <td><i>Ident</i></td>
 </tr>
@@ -818,154 +485,64 @@ All other symbols are terminals.
 <td><i>Integer</i></td>
 </tr>
 <tr>
-<td><i>[Binding]</i></td>
+<td><i>[QryElem]</i></td>
 <td>-&gt;</td>
 <td><b>eps</b></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>Binding</i></td>
+<td><i>QryElem</i></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>Binding</i> <code>,</code> <i>[Binding]</i></td>
+<td><i>QryElem</i> <code>,</code> <i>[QryElem]</i></td>
 </tr>
 <tr>
-<td><i>[DomainDeclOrCond]</i></td>
+<td><i>[QryValue]</i></td>
 <td>-&gt;</td>
 <td><b>eps</b></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>DomainDeclOrCond</i></td>
+<td><i>QryValue</i></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>DomainDeclOrCond</i> <code>,</code> <i>[DomainDeclOrCond]</i></td>
+<td><i>QryValue</i> <code>,</code> <i>[QryValue]</i></td>
 </tr>
 <tr>
-<td><i>[DomainExpr]</i></td>
+<td><i>[SubstPair]</i></td>
 <td>-&gt;</td>
 <td><b>eps</b></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>DomainExpr</i></td>
+<td><i>SubstPair</i></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>DomainExpr</i> <code>,</code> <i>[DomainExpr]</i></td>
+<td><i>SubstPair</i> <code>,</code> <i>[SubstPair]</i></td>
 </tr>
 <tr>
-<td><i>[DomainPtn]</i></td>
+<td><i>[URIPathElement]</i></td>
 <td>-&gt;</td>
 <td><b>eps</b></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>DomainPtn</i></td>
+<td><i>URIPathElement</i></td>
 </tr>
 <tr>
 <td></td>
 <td align="center"><b>|</b></td>
-<td><i>DomainPtn</i> <code>,</code> <i>[DomainPtn]</i></td>
-</tr>
-<tr>
-<td><i>[FormalExpr]</i></td>
-<td>-&gt;</td>
-<td><b>eps</b></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>FormalExpr</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>FormalExpr</i> <code>,</code> <i>[FormalExpr]</i></td>
-</tr>
-<tr>
-<td><i>[RLambdaExpr1]</i></td>
-<td>-&gt;</td>
-<td><b>eps</b></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RLambdaExpr1</i> <i>[RLambdaExpr1]</i></td>
-</tr>
-<tr>
-<td><i>[FormalPCtxt]</i></td>
-<td>-&gt;</td>
-<td><b>eps</b></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>FormalPCtxt</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>FormalPCtxt</i> <code>,</code> <i>[FormalPCtxt]</i></td>
-</tr>
-<tr>
-<td><i>[RLambdaPCtxt1]</i></td>
-<td>-&gt;</td>
-<td><b>eps</b></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RLambdaPCtxt1</i> <i>[RLambdaPCtxt1]</i></td>
-</tr>
-<tr>
-<td><i>[FormalLCtxt]</i></td>
-<td>-&gt;</td>
-<td><b>eps</b></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>FormalLCtxt</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>FormalLCtxt</i> <code>,</code> <i>[FormalLCtxt]</i></td>
-</tr>
-<tr>
-<td><i>[RLambdaLCtxt1]</i></td>
-<td>-&gt;</td>
-<td><b>eps</b></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>RLambdaLCtxt1</i> <i>[RLambdaLCtxt1]</i></td>
-</tr>
-<tr>
-<td><i>[URLPathElement]</i></td>
-<td>-&gt;</td>
-<td><b>eps</b></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>URLPathElement</i></td>
-</tr>
-<tr>
-<td></td>
-<td align="center"><b>|</b></td>
-<td><i>URLPathElement</i> <code>/</code> <i>[URLPathElement]</i></td>
+<td><i>URIPathElement</i> <code>/</code> <i>[URIPathElement]</i></td>
 </tr>
 <tr>
 <td><i>[DNSElement]</i></td>

@@ -1,362 +1,216 @@
 -- -*- mode: Haskell;-*- 
--- Filename:    dataset.cf 
+-- Filename:    amqpJSONAPI.cf 
 -- Authors:     lgm                                                    
--- Creation:    Thu Jan  8 13:48:32 2009 
+-- Creation:    Tue Jan 17 21:06:06 2012 
 -- Copyright:   Not supplied 
 -- Description: 
---
--- Some examples
---
--- // a small extensional collection of values
--- record { 1, 2, 3 } 
---
--- // another small extensional collection of values
--- record { lambda x. x, lambda x, y. x, lambda x, y, z. (x z (y z)) } 
---
--- // combining the first and second collections
--- let R1 = record { lambda x. x, lambda x, y. x, lambda x, y, z. (x z (y z)) },
---     R2 = record { 1, 2, 3 } in
---     R1 | R2
---
--- // building a lazy collection
--- let R3 = 1 :: R3 in R3
---
--- // a collection of terms built from extracting sources from R1, R2, R3
--- // and placing them in a ctor
--- let R1 = record { lambda x. x, lambda x, y. x, lambda x, y, z. (x z (y z)) },
---     R2 = record { 1, 2, 3 } 
---     R3 = 1 :: R3 in
--- record { lambda X, Y, Z. ($H1 $A1 $A2) | $H1 <- R1, $A1 <- R2, $A2 <- R3 }
---
--- // a collection of terms built from extracting sources from a persistent
--- // store and filtering for specific structure
--- record { $H1 | $H1 <- store jdbc:mysql://localhost/vorpal_production, 
---                $H1 in lambda X, Y, Z. (true true (true true)) }
---
 -- ------------------------------------------------------------------------
 
--- ********************************************************************************* --
---                       RecordExprs collect domain values                           --
--- ********************************************************************************* --
+-- Framed Messages
 
-Joined           . RecordExpr        ::= RecordExpr "&" RecordExpr1                   ;
-Isolated         . RecordExpr        ::= RecordExpr1 "|" RecordExpr2                  ;
-Consed           . RecordExpr2       ::= DomainExpr "::" RecordExpr3                  ;
-Contexted        . RecordExpr3       ::= "let" [Binding] "in" RecordExpr3             ;
-Referenced       . RecordExpr3       ::= RecordVariable                               ;
-Collected        . RecordExpr3       ::= "record" CollectionExpr                      ;
-Emptied          . RecordExpr3       ::= "Nil"                                        ;
+-- Note bene: i left framed messages intentionally order-insensitive
+-- as a reminder of the complexity of "schematic" JSON parsing. With
+-- the order-insensitive kv-pairs the combinatorics of validating a
+-- JSON object are prohibitively complex.
 
-_                . RecordExpr        ::= RecordExpr1                                  ;
-_                . RecordExpr1       ::= RecordExpr2                                  ;
-_                . RecordExpr2       ::= RecordExpr3                                  ;
-_                . RecordExpr3       ::= "(" RecordExpr ")"                           ;
+-- To overcome this complexity one has to sequentialize the
+-- structure. JSON offers *two* strategies for sequential structure:
+-- nesting objects and arrays. In this specification we have used
+-- arrays to reduce the complexity.
 
-BindingExpr      . Binding           ::= RecordPtn "=" RecordPtn                      ;
+-- With this solution we have the following advantages
 
-RecordDestructor . RecordPtn         ::= "{:" [DomainPtn] ":" RecordPtn ":}"          ;
-RecordLiteral    . RecordPtn         ::= RecordExpr                                   ;
+-- 1) This is legal JSON, and as such is parsable by any OTS JSON parser
 
-RecordIdent      . RecordVariable    ::= UIdent                                       ;
-RecordWild       . RecordVariable    ::= "_"                                          ;
+-- 2) It is *also* a legal context-free grammar with an evident
+-- expression in LBNF (labeled version of EBNF). This means that we have
 
--- ********************************************************************************* --
---    We formally acknowledge that there are two kinds of collections:               --
---    1) Those we can write down explicitly -- extensionally -- and                  --
---    2) Those we must write down programmatically -- intensionally                  --
---                                                                                   --
---    In computation there are several situations where we must write down           --
---    collections programmatically, here are two:                                    --
---    1) We don't know the elements in advance: we learn them as we go               --
---    2) There are too many of them (up to countably infinitely many) to write down  --
---       but we have a rule that allows us to pick them out or produce them from     --
---       another collection                                                          --
--- ********************************************************************************* --
+--    a) an implementation-independent specification of the API
 
-Extension        . CollectionExpr    ::= ExtensionBodyExpr                            ;
-Intension        . CollectionExpr    ::= IntensionBodyExpr                            ;
+--    b) said specification can be fed into OTS tools, such as BNFC,
+--    to generate a parser that validates the specific structure (and
+--    not just that it is JSON)
 
-ExtensionBody    . ExtensionBodyExpr ::= "{" [DomainExpr] "}"                         ;
-IntensionBody    . IntensionBodyExpr ::= "{" DomainPtn "|" [DomainDeclOrCond] "}"     ;
+KVDBJustReqHB   . Message       ::= "{" LblReqHeader "," LblReqBody "}"                 ;
+KVDBJustReqBH   . Message       ::= "{" LblReqBody "," LblReqHeader "}"                 ;
+KVDBJustRspHB   . Message       ::= "{" LblRspHeader "," LblRspBody "}"                 ;
+KVDBJustRspBH   . Message       ::= "{" LblRspBody "," LblRspHeader "}"                 ;
 
--- ********************************************************************************* --
---                     Intensional collection elements
--- ********************************************************************************* --
+KVDBLblReqHdr   . LblReqHeader  ::= "\"headers\"" ":" ReqHeader                         ;
+KVDBLblRspHdr   . LblRspHeader  ::= "\"headers\"" ":" RspHeader                         ;
 
-ConditionIn      . DomainDeclOrCond  ::= DomainCond                                   ;
-DeclIn           . DomainDeclOrCond  ::= DomainGen                                    ;
+KVDBLblReqBody  . LblReqBody    ::= "\"body\"" ":" KVDBRequest                          ;
+KVDBLblRspBody  . LblRspBody    ::= "\"body\"" ":" KVDBResponse                         ;
 
-DomainGenExpr    . DomainGen         ::= DomainPtn "<-" RecordSource                  ;
-DomainSatExpr    . DomainCond        ::= DomainPtn "in" DomainCondition               ;
-DomainCompExpr   . DomainCond        ::= ValueExpr Comparison ValueExpr               ;
+-- Headers
+--                                      to     from    msgId    flowId  justification
+KVDBReqHdr      . ReqHeader     ::= "[" URI "," URI "," UUID "," UUID "," ReqJust "]"   ;
+-- for testing purposes
+KVDBReqNoHdr    . ReqHeader     ::= "[" "{" "\"testReqEmptyHdrs\"" ":" "null" "}" "]"   ;
+--KVDBReqURIHdr   . ReqHeader     ::= "[" "{" "\"testReqURIHdr\"" ":" URI "}" "]"             ;
+--KVDBReqUUIDHdr  . ReqHeader     ::= "[" "{" "\"testReqUUIDHdr\"" ":" UUID "}" "]"           ;
 
-DomainPtnExpr    . DomainPtn         ::= "?" RLambdaPCtxt                             ;
-DomainRLambdaExpr . DomainExpr       ::= RLambdaExpr                                  ;
+--                                      to     from    msgId    flowId  justification
+KVDBRspHdr      . RspHeader     ::= "[" URI "," URI "," UUID "," UUID "," RspJust "]"   ;
+-- for testing purposes
+KVDBRspNoHdr    . RspHeader     ::= "[" "{" "\"testRspEmptyHdrs\"" ":" "null" "}" "]"   ;
+--KVDBRspURIHdr   . RspHeader     ::= "[" "{" "\"testRspURIHdr\"" ":" URI "}" "]"             ;
+--KVDBRspUUIDHdr  . RspHeader     ::= "[" "{" "\"testRspUUIDHdr\"" ":" UUID "}" "]"           ;
 
-OnBoardSource    . RecordSource      ::= RecordExpr                                   ;
-PersistentSource . RecordSource      ::= "store" StoreURL                             ;
-WireSource       . RecordSource      ::= "wire" WireURL                               ;
+-- Requests
 
--- ********************************************************************************* --
--- These DomainConditions come from the structure of the results collection      
--- ********************************************************************************* --
+KVDBAskReq      . KVDBRequest   ::= "{" AskReq ":" AskReqPacket "}"                     ;
+KVDBTellReq     . KVDBRequest   ::= "{" TellReq ":" TellReqPacket "}"                   ;
+-- for testing purposes
+KVDBNoReq       . KVDBRequest   ::= "[" "{" "\"testReqEmptyBody\"" ":" "null" "}" "]"   ;
 
-DisjunctDomainCondition . DomainCondition  ::= DomainCondition "||" DomainCondition1  ;
-ConjunctDomainCondition . DomainCondition1 ::= DomainCondition1 "&" DomainCondition2  ;
-NegatedDomainCondition  . DomainCondition2 ::= "~" DomainCondition2                   ;
+-- Responses
 
-_                . DomainCondition   ::= DomainCondition1                             ;
-_                . DomainCondition1  ::= DomainCondition2                             ;
-_                . DomainCondition2  ::= "(" DomainCondition ")"                      ;
+KVDBAskRsp      . KVDBResponse  ::= "{" AskRsp ":" AskRspPacket "}"                     ;
+KVDBTellRsp     . KVDBResponse  ::= "{" TellRsp ":" TellRspPacket "}"                   ;
+-- for testing purposes
+KVDBNoRsp       . KVDBResponse  ::= "[" "{" "\"testRspEmptyBody\"" ":" "null" "}" "]"   ;
 
--- ********************************************************************************* --
--- These DomainConditions come from the structure of the domain term language
--- ********************************************************************************* --
+-- Payload
 
-StructuralDomainCondition . DomainCondition2 ::= "?" RLambdaLCtxt                     ;
+KVDBAskReqData  . AskReqPacket  ::= "{" "\"ask\"" ":" Pattern "}"                       ;
+KVDBAskRspData  . AskRspPacket  ::= "{" "\"answer\"" ":" "[" Pattern "," Substitution "," Blob "]" "}" ;
+KVDBTellReqData . TellReqPacket ::= "{" "\"tell\"" ":" "[" Pattern "," Blob "]" "}"     ;
+KVDBTellRspData . TellRspPacket ::= "{" "\"acknowledge\"" ":" Status  "}"               ;
 
--- ********************************************************************************* --
--- These DomainConditions come from the behavior of the domain term language
--- ********************************************************************************* --
+-- Justifications
 
-BehavioralDomainCondition . DomainCondition2 ::= Modality DomainCondition2            ;
-ProbePossibility . Modality          ::= "<" DomainCondition2 ">"                     ;
+KVDBReqJustNone . ReqJust       ::= "{" "\"response\"" ":" "null" "}"                   ;
+KVDBReqJustSome . ReqJust       ::= "{" "\"response\"" ":" "[" UUID "]" "}"             ;
+KVDBRspJustNone . RspJust       ::= "{" "\"request\"" ":" "null" "}"                    ;
+KVDBRspJustSome . RspJust       ::= "{" "\"request\"" ":" "[" UUID "]" "}"              ;
 
--- ********************************************************************************* --
--- The de-structors of the domain term language can be used both for logical         --
--- conditions as well as patterns.                                                   --
---                                                                                   --
--- From a DRY perspective the LBNF formalism does not offer quite enough             --
--- parametricity. We have to repeat the context specification to allow the context   --
--- hole to be a pattern variable in the case of the pattern language, and the ground --
--- logical values in the case of the logical conditions.                             --
---                                                                                   --
--- There are a number of other situations where a parametric form of BNF would be of --
--- considerable utility.                                                             --
--- ********************************************************************************* --
+-- Message type
 
-ApplicationPCtxt . RLambdaPCtxt       ::= RLambdaPCtxt [RLambdaPCtxt1] ";"             ;
-AbstractionPCtxt . RLambdaPCtxt1      ::= "lambda" [FormalPCtxt] "." RLambdaPCtxt2     ;
-KPCtxt           . RLambdaPCtxt2      ::= ContinuePCtxt                                ;
-GroundPCtxt      . RLambdaPCtxt2      ::= ValuePCtxt                                   ;
-MentionPCtxt     . RLambdaPCtxt2      ::= FormalPCtxt                                  ;
+KVDBGetReq      . AskReq        ::= "\"getRequest\""                                    ;
+KVDBFetchReq    . AskReq        ::= "\"fetchRequest\""                                  ;
+KVDBSubscribeReq . AskReq       ::= "\"subscribeRequest\""                              ;
 
-_                . RLambdaPCtxt       ::= RLambdaPCtxt1                                ;
-_                . RLambdaPCtxt1      ::= RLambdaPCtxt2                                ;
-_                . RLambdaPCtxt2      ::= "(" RLambdaPCtxt ")"                         ;
+KVDBPutReq      . TellReq       ::= "\"putRequest\""                                    ;
+KVDBStoreReq    . TellReq       ::= "\"storeRequest\""                                  ;
+KVDBPublishReq  . TellReq       ::= "\"publishRequest\""                                ;
 
-PushPromptPCtxt  . ContinuePCtxt      ::= "pushPrompt" RLambdaPCtxt2 RLambdaPCtxt2     ;
-SubcontPCtxt     . ContinuePCtxt      ::= "withSubCont" RLambdaPCtxt2 RLambdaPCtxt2    ;
-PushSubContPCtxt . ContinuePCtxt      ::= "pushSubCont" RLambdaPCtxt2 RLambdaPCtxt2    ;
+KVDBGetRsp      . AskRsp        ::= "\"getResponse\""                                   ;
+KVDBFetchRsp    . AskRsp        ::= "\"fetchResponse\""                                 ;
+KVDBSubscribeRsp . AskRsp       ::= "\"subscribeResponse\""                             ;
 
-TranscriptPCtxt  . FormalPCtxt        ::= "@" "<" RLambdaPCtxt2 ">"                    ;
+KVDBPutRsp      . TellRsp       ::= "\"putResponse\""                                   ;
+KVDBStoreRsp    . TellRsp       ::= "\"storeResponse\""                                 ;
+KVDBPublishRsp  . TellRsp       ::= "\"publishResponse\""                               ;
 
--- ********************************************************************************* --
--- The basic expressions also provide de-structors                                   --
--- ********************************************************************************* --
+KVDBStatusOk    . Status        ::= "\"ok\""                                            ;
+KVDBStatusNotOk . Status        ::= "\"notok\""                                         ;
+KVDBStatusCode  . Status        ::= Integer                                             ;
+KVDBStatusStr   . Status        ::= String                                              ;
 
-ValueAddPCtxt    . ValuePCtxt         ::= ValuePCtxt "+" ValuePCtxt1                   ;
-ValueMultPCtxt   . ValuePCtxt1        ::= ValuePCtxt1 "*" ValuePCtxt2                  ;
-ValueNegPCtxt    . ValuePCtxt2        ::= "-" ValuePCtxt3                              ;
-ValueLitPCtxt    . ValuePCtxt3        ::= "!" ValueLiteral                             ;
+-- Patterns
 
-ValueEmptyPCtxt  . ValuePCtxt3        ::= ValuePCtxtHole                               ;
+QPointed        . Pattern       ::= QryTerm                                             ;
 
-_                . ValuePCtxt         ::= ValuePCtxt1                                  ;
-_                . ValuePCtxt1        ::= ValuePCtxt2                                  ;
-_                . ValuePCtxt2        ::= ValuePCtxt3                                  ;
-_                . ValuePCtxt3        ::= "[" ValuePCtxt "]"                           ;
+-- Values
+
+QBlob           . Blob          ::= String                                              ;
+
+-- Substitutions
+
+KVDBSubst       . Substitution  ::= "{" [SubstPair] "}"                                 ;
+KVDBSubstPair   . SubstPair     ::= VarUIdent ":" QryTerm                               ;
 
 -- ********************************************************************************* --
--- As mentioned above, the de-structors of the domain term language can be used both --
--- for logical conditions as well as patterns; but, the LBNF formalism is not quite  --
--- up to providing the ideally DRY conditions.                                       --
+--                        Simple Query Syntax
 -- ********************************************************************************* --
 
-ApplicationLCtxt . RLambdaLCtxt       ::= RLambdaLCtxt [RLambdaLCtxt1] ";"              ;
-AbstractionLCtxt . RLambdaLCtxt1      ::= "lambda" [FormalLCtxt] "." RLambdaLCtxt2      ;
-KLCtxt           . RLambdaLCtxt2      ::= ContinueLCtxt                                 ;
-MentionLCtxt     . RLambdaLCtxt2      ::= FormalLCtxt                                   ;
-GroundLCtxt      . RLambdaLCtxt2      ::= ValueLCtxt                                    ;
+QTerm           . QryTerm       ::= "{" String ":" QryArray "}"                         ;
 
-_                . RLambdaLCtxt       ::= RLambdaLCtxt1                                 ;
-_                . RLambdaLCtxt1      ::= RLambdaLCtxt2                                 ;
-_                . RLambdaLCtxt2      ::= "(" RLambdaLCtxt ")"                          ;
+QVar            . QryElem       ::= VarUIdent                                           ;
+QVal            . QryElem       ::= QryValue                                            ;
 
-PushPromptLCtxt  . ContinueLCtxt      ::= "pushPrompt" RLambdaLCtxt2 RLambdaLCtxt2      ;
-SubconLCtxt      . ContinueLCtxt      ::= "withSubCont" RLambdaLCtxt2 RLambdaLCtxt2     ;
-PushSubContLCtxt . ContinueLCtxt      ::= "pushSubCont" RLambdaLCtxt2 RLambdaLCtxt2     ;
+QAtomic         . QryValue      ::= QryGrndLit                                          ;
+QColl           . QryValue      ::= QryArray                                            ;
+QComp           . QryValue      ::= QryTerm                                             ;
 
-TranscriptLCtxt  . FormalLCtxt        ::= "@" "<" RLambdaLCtxt2 ">"                     ;
+QArray          . QryArray      ::= "[" [QryElem] "]"                                   ;
+                   
+QStr            . QryGrndLit    ::= String                                              ;
+QNum            . QryGrndLit    ::= QryNum                                              ;
+QBool           . QryGrndLit    ::= QryBool                                             ;
+QNul            . QryGrndLit    ::= "null"                                              ;
 
--- ********************************************************************************* --
--- The basic expressions also provide de-structors                                   --
--- ********************************************************************************* --
+QTru            . QryBool       ::= "true"                                              ;
+QFal            . QryBool       ::= "false"                                             ;
 
-ValueAddLCtxt    . ValueLCtxt         ::= ValueLCtxt "+" ValueLCtxt1                    ;
-ValueMultLCtxt   . ValueLCtxt1        ::= ValueLCtxt1 "*" ValueLCtxt2                   ;
-ValueNegLCtxt    . ValueLCtxt2        ::= "-" ValueLCtxt3                               ;
-ValueLitLCtxt    . ValueLCtxt3        ::= "!" ValueLiteral                              ;
-
-ValueEmptyLCtxt  . ValueLCtxt3        ::= ValueLCtxtHole                                ;
-
-_                . ValueLCtxt         ::= ValueLCtxt1                                   ;
-_                . ValueLCtxt1        ::= ValueLCtxt2                                   ;
-_                . ValueLCtxt2        ::= ValueLCtxt3                                   ;
-_                . ValueLCtxt3        ::= "[" ValueLCtxt "]"                            ;
+QInt            . QryNum        ::= Integer                                             ;
+QDbl            . QryNum        ::= Double                                              ;
 
 -- ********************************************************************************* --
---                             Flavors of Context Holes
+--                        Simple URI Syntax
 -- ********************************************************************************* --
 
---ValPPlaceHolder  . ValuePCtxtHole    ::= "$" UIdent                                   ;
-ValPPlaceHolder  . ValuePCtxtHole    ::= UIdent                                       ;
-ValWildCard      . ValuePCtxtHole    ::= Wild                                         ;
+BasicURI         . URI               ::= URIScheme ":" URIPath                        ;
+--URIQryStr        . URI               ::= URIScheme ":" URIPath "?" URIQryStr          ;
+NullURI          . URI               ::= "null"                                       ;
+LocatedtedPath   . URIPath           ::= "/" URILocation URIRelativePath              ;
+--RelativePath     . URIPath           ::= "/" URIRelativePath                          ;
 
-ValLPlaceHolder  . ValueLCtxtHole    ::= LogicalGround                                ;
+URINetLocation   . URILocation       ::= URIRoot URIRsrcLocation                      ;
+URIRsrcPortLoc   . URIRsrcLocation   ::= NetLocation ":" Port                         ;
+URIRsrcLoc       . URIRsrcLocation   ::= NetLocation                                  ;
 
--- ********************************************************************************* --
--- These DomainConditions come from the structure of the results collection      
--- ********************************************************************************* --
+--URIBasicQryStr   . URIQryStr         ::= [QSKVPair]                                   ;
+--URIQSKVPair      . QSKVPair          ::= QSField "=" QSValue                          ;
 
-Verity           . LogicalGround     ::= "true"                                       ;
-Absurdity        . LogicalGround     ::= "false"                                      ;
-Nullity          . LogicalGround     ::= "null"                                       ;
+-- QSUField         . QSField           ::= UIdent                                       ;
+-- QSLField         . QSField           ::= LIdent                                       ;
 
-Equality         . Comparison        ::= "=="                                         ;
-Less             . Comparison        ::= "<"                                          ;
-More             . Comparison        ::= ">"                                          ;
-LEq              . Comparison        ::= "<="                                         ;
-GEq              . Comparison        ::= ">="                                         ;
+-- QSUValue         . QSValue           ::= UIdent                                       ;
+-- QSLValue         . QSValue           ::= LIdent                                       ;
 
--- ********************************************************************************* --
---                     The Domain of RLambda Expressions                             --
--- ********************************************************************************* --
+SlashPath        . URIRelativePath   ::= URIRoot [URIPathElement]                     ;
 
-Application      . RLambdaExpr       ::= RLambdaExpr [RLambdaExpr1] ";"               ;
-Abstraction      . RLambdaExpr1      ::= "lambda" [FormalExpr] "." RLambdaExpr2       ;
-Continuation     . RLambdaExpr1      ::= ContinueExpr                                 ;
-Mention          . RLambdaExpr2      ::= FormalExpr                                   ;
-Value            . RLambdaExpr2      ::= ValueExpr                                    ;
-
-_                . RLambdaExpr       ::= RLambdaExpr1                                 ;
-_                . RLambdaExpr1      ::= RLambdaExpr2                                 ;
---_                . ValueLiteral      ::= "(" RLambdaExpr ")"                          ;
-
-Prompt           . ContinueExpr      ::= "newPrompt"                                  ;
-PushPrompt       . ContinueExpr      ::= "pushPrompt" RLambdaExpr2 RLambdaExpr2       ;
-Subcontinuation  . ContinueExpr      ::= "withSubCont" RLambdaExpr2 RLambdaExpr2      ;
-PushSubCont      . ContinueExpr      ::= "pushSubCont" RLambdaExpr2 RLambdaExpr2      ;
-
-Transcription    . FormalExpr        ::= "@" "<" RLambdaExpr2 ">"                     ;
-AtomLiteral      . FormalExpr        ::= Ident                                        ;
-
--- ********************************************************************************* --
---                       Extended with basic expressions                             --
--- ********************************************************************************* --
-
-ValueAddExpr     . ValueExpr         ::= ValueExpr "+" ValueExpr1                     ;
-ValueMultExpr    . ValueExpr1        ::= ValueExpr1 "*" ValueExpr2                    ;
-ValueNegExpr     . ValueExpr2        ::= "-" ValueExpr3                               ;
-ValueLitExpr     . ValueExpr3        ::= ValueLiteral                                 ;
-
-_                . ValueExpr         ::= ValueExpr1                                   ;
-_                . ValueExpr1        ::= ValueExpr2                                   ;
-_                . ValueExpr2        ::= ValueExpr3                                   ;
-_                . ValueExpr3        ::= "[" ValueExpr "]"                            ;
-
-ValueRecLit      . ValueLiteral      ::= "!" RecordExpr3                              ;
-ValueLamLit      . ValueLiteral      ::= "(" RLambdaExpr ")"                          ;
-ValueIntLit      . ValueLiteral      ::= Integer                                      ;
-ValueDoubleLit   . ValueLiteral      ::= Double                                       ;
-ValueStringLit   . ValueLiteral      ::= String                                       ;
-ValueCharLit     . ValueLiteral      ::= Char                                         ;
-
-ValueURLLit      . ValueLiteral      ::= URL                                          ;
-
-RecordStoreURL   . StoreURL          ::= URL                                          ;
-RecordWireURL    . WireURL           ::= URL                                          ;
-
--- ********************************************************************************* --
---                        Simple URL Syntax
--- ********************************************************************************* --
-
-BasicURL         . URL               ::= "<" URLScheme ":" URLPath ">"                ;
-LocatedtedPath   . URLPath           ::= "/" URLLocation URLRelativePath              ;
---RelativePath     . URLPath           ::= "/" URLRelativePath                          ;
-
-URLNetLocation   . URLLocation       ::= URLRoot URLRsrcLocation                      ;
-URLRsrcPortLoc   . URLRsrcLocation   ::= NetLocation ":" Port                         ;
-URLRsrcLoc       . URLRsrcLocation   ::= NetLocation                                  ;
-
-SlashPath        . URLRelativePath   ::= URLRoot [URLPathElement]                     ;
-
-URLOrigin        . URLRoot           ::= "/"                                          ;
+URIOrigin        . URIRoot           ::= "/"                                          ;
 DNSAddr          . NetLocation       ::= [DNSElement]                                 ;
-AtomScheme       . URLScheme         ::= Ident                                        ;
-AtomPathElement  . URLPathElement    ::= Ident                                        ;
-AtomDNSElement   . DNSElement        ::= Ident                                        ;
+AtomScheme       . URIScheme         ::= LIdent                                       ;
+AtomPathElement  . URIPathElement    ::= LIdent                                       ;
+AtomDNSElement   . DNSElement        ::= LIdent                                       ;
 AtomPort         . Port              ::= Integer                                      ;
 
--- ********************************************************************************* --
---                        Lists used in the syntax
--- ********************************************************************************* --
+-- UUID
 
-[]               . [Binding]         ::=                                              ;
-(: [])           . [Binding]         ::= Binding                                      ;
-(:)              . [Binding]         ::= Binding "," [Binding]                        ;
+KVDBLUUID        . UUID              ::= LIdent                                       ;
+--KVDBUUUID        . UUID              ::= UIdent                                       ;
+KVDBPrimUUID     . UUID              ::= PrimUUID                                     ;
+KVDBNullUUID     . UUID              ::= "null"                                       ;
 
-[]               . [DomainDeclOrCond] ::=                                             ;
-(: [])           . [DomainDeclOrCond] ::= DomainDeclOrCond                            ;
-(:)              . [DomainDeclOrCond] ::= DomainDeclOrCond "," [DomainDeclOrCond]     ;
+-- Sequences
 
-[]               . [DomainExpr]      ::=                                              ;
-(: [])           . [DomainExpr]      ::= DomainExpr                                   ;
-(:)              . [DomainExpr]      ::= DomainExpr "," [DomainExpr]                  ;
+[]               . [QryElem]         ::=                                              ;
+(: [])           . [QryElem]         ::= QryElem                                      ;
+(:)              . [QryElem]         ::= QryElem "," [QryElem]                        ;
 
-[]               . [DomainPtn]       ::=                                              ;
-(: [])           . [DomainPtn]       ::= DomainPtn                                    ;
-(:)              . [DomainPtn]       ::= DomainPtn "," [DomainPtn]                    ;
+[]               . [SubstPair]       ::=                                              ;
+(: [])           . [SubstPair]       ::= SubstPair                                    ;
+(:)              . [SubstPair]       ::= SubstPair "," [SubstPair]                    ;
 
-[]               . [FormalExpr]      ::=                                              ;
-(: [])           . [FormalExpr]      ::= FormalExpr                                   ;
-(:)              . [FormalExpr]      ::= FormalExpr "," [FormalExpr]                  ;
+-- []               . [QSKVPair]        ::=                                              ;
+-- (: [])           . [QSKVPair]        ::= QSKVPair                                     ;
+-- (:)              . [QSKVPair]        ::= QSKVPair "&" [QSKVPair]                      ;
 
-[]               . [RLambdaExpr1]    ::=                                              ;
---(: [])           . [RLambdaExpr1]    ::= RLambdaExpr1                                 ;
-(:)              . [RLambdaExpr1]    ::= RLambdaExpr1 [RLambdaExpr1]                  ;
-
-[]               . [FormalPCtxt]     ::=                                              ;
-(: [])           . [FormalPCtxt]     ::= FormalPCtxt                                  ;
-(:)              . [FormalPCtxt]     ::= FormalPCtxt "," [FormalPCtxt]                ;
-
-[]               . [RLambdaPCtxt1]   ::=                                              ;
---(: [])           . [RLambdaPCtxt1]   ::= RLambdaPCtxt1                                ;
-(:)              . [RLambdaPCtxt1]   ::= RLambdaPCtxt1 [RLambdaPCtxt1]                ;
-
-[]               . [FormalLCtxt]     ::=                                              ;
-(: [])           . [FormalLCtxt]     ::= FormalLCtxt                                  ;
-(:)              . [FormalLCtxt]     ::= FormalLCtxt "," [FormalLCtxt]                ;
-
-[]               . [RLambdaLCtxt1]   ::=                                              ;
---(: [])           . [RLambdaLCtxt1]   ::= RLambdaLCtxt1                                ;
-(:)              . [RLambdaLCtxt1]   ::= RLambdaLCtxt1 [RLambdaLCtxt1]                ;
-
-[]               . [URLPathElement]  ::=                                              ;
-(: [])           . [URLPathElement]  ::= URLPathElement                               ;
-(:)              . [URLPathElement]  ::= URLPathElement "/" [URLPathElement]          ;
+[]               . [URIPathElement]  ::=                                              ;
+(: [])           . [URIPathElement]  ::= URIPathElement                               ;
+(:)              . [URIPathElement]  ::= URIPathElement "/" [URIPathElement]          ;
 
 []               . [DNSElement]      ::=                                              ;
 (: [])           . [DNSElement]      ::= DNSElement                                   ;
 (:)              . [DNSElement]      ::= DNSElement "." [DNSElement]                  ;
 
-comment "//"      ;
-comment "/*" "*/" ;
-
--- entrypoints RecordExpr, RLambdaExpr, ValueExpr ;
--- entrypoints RLambdaExpr2 ;
-
+token VarUIdent ('"' '$' upper (letter | digit | '_')* '"') ;
 token UIdent (upper (letter | digit | '_')*) ;
---token LIdent (lower (letter | digit | '_')*) ;
---token Wild   '_' char* ;
-token Wild   '_' ;
+token LIdent (lower (letter | digit | '_')*) ;
+token Wild   '_' char* ;
+
+token PrimUUID ( (('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('a' | 'b' | 'c' | 'd' | 'e' | 'f' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) );
